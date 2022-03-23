@@ -1,16 +1,16 @@
 import types
 
 from .rest_client import RestClient
+from ..server import __VERSION__
 
 class RemoteObject(RestClient):
     def __init__(self,
         server_uri,
         class_key,
         init_args_dict={},
-        server_version = '1.0.0',
         delete_remote_on_del = True,
     ):
-        super().__init__(server_uri, server_version)
+        super().__init__(server_uri, __VERSION__)
 
         registration_response = self._get(
             'registry',
@@ -97,10 +97,9 @@ def defineRemoteClass(
     class_key,
     server_uri,
     globals_dict,
-    server_version = '1.0.0',
     delete_remote_on_del = True
 ):
-    r = RestClient(server_uri, server_version)
+    r = RestClient(server_uri, __VERSION__)
     init_signature_response = r._get(
         'registry/signature',
         params= {'class_key': class_key}
@@ -129,7 +128,6 @@ def defineRemoteClass(
         f"\t\t\t'{server_uri}',",
         f"\t\t\t'{class_key}',",
         f"\t\t\tinit_args_dict = kwargs,",
-        f"\t\t\tserver_version = '{server_version}',",
         f"\t\t\tdelete_remote_on_del = {delete_remote_on_del},",
         f"\t\t)",
         # f"\t\tprint(f'`{class_key}Remote`.__init__({{kwargs}})')",

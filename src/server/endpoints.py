@@ -2,6 +2,7 @@ from flask import request
 from flask_restful import Resource, Api, reqparse
 
 from .object_registry import ObjectRegistry
+from .server_version import __VERSION__
 
 __REMOTE_OBJECT_REGISTRY__ = None
 
@@ -122,7 +123,7 @@ class RemoteObjectEndpoint_Registry(Resource):
 class RemoteObjectEndpoint_Version(Resource):
     def get(self):
         return {
-            'response': '1.0.0'
+            'response': __VERSION__
         }, 200
 
 def addRemoteObjectResources(flask_api, class_list):
