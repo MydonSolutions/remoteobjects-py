@@ -125,10 +125,10 @@ class RemoteObjectEndpoint_Version(Resource):
             'response': '1.0.0'
         }, 200
 
-def addRemoteObjectResources(flask_api, object_registry):
+def addRemoteObjectResources(flask_api, class_list):
     global __REMOTE_OBJECT_REGISTRY__
-    
-    __REMOTE_OBJECT_REGISTRY__ = object_registry
+
+    __REMOTE_OBJECT_REGISTRY__ = ObjectRegistry(class_list)
     flask_api.add_resource(RemoteObjectEndpoint_Signature, '/registry/signature')
     flask_api.add_resource(RemoteObjectEndpoint_Registry, '/registry')
     flask_api.add_resource(RemoteObjectEndpoint_Version, '/version')
