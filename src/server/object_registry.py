@@ -159,19 +159,19 @@ class ObjectRegistry(object):
         
         return objid
 
-    def obj_set_id(self, objid, new_id):
+    def obj_set_id(self, objid, newid):
         if objid not in self._registered_obj_dict:
             raise NotImplementedError("No registered object for `{}`.".format(
                 objid)
             )
-        if new_id in self._registered_obj_dict:
+        if newid in self._registered_obj_dict:
             raise RuntimeError(("Proposed ID `{}` for object already used for "
                 "`{}`.").format(
-                    new_id, self._registered_obj_dict[new_id]
+                    newid, self._registered_obj_dict[newid]
                 )
             )
-        self._registered_obj_dict[new_id] = self._registered_obj_dict.pop(obj_id)
-        return new_id
+        self._registered_obj_dict[newid] = self._registered_obj_dict.pop(objid)
+        return newid
 
     def deregister_object(self, objid):
         if objid not in self._registered_obj_dict:
