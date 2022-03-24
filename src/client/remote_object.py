@@ -9,14 +9,19 @@ class RemoteObject(RestClient):
         class_key,
         init_args_dict={},
         delete_remote_on_del = True,
+        remote_object_id = None,
     ):
         super().__init__(server_uri, __VERSION__)
 
+        params = {
+            'class_key': class_key,
+        }
+        if remote_object_id is not None:
+            params['object_id'] = remote_object_id
+
         registration_response = self._get(
             'registry',
-            params = {
-                'class_key': class_key,
-            },
+            params = params,
             data = init_args_dict
         )
         if registration_response.status_code != 200:
@@ -111,11 +116,16 @@ def defineRemoteClass(
 
     definition_loc =  [f"class {class_key}Remote(RemoteObject):"]
     definition_loc += [
-        "\tdef __init__({}{}{}, **kwargs):".format(
+        "\tdef __init__("
+        "\t\t{}{}{},".format(
             ', '.join(init_req_args),
             ', ' if len(init_opt_args) > 0 else '',
             ', '.join(f'{name}:{default}' for name, default in init_opt_args.items()),
         ),
+        f"\t\tremote_object_id = None,",
+        f"\t\tdelete_remote_on_del = {delete_remote_on_del},",
+        f"\t\t**kwargs",
+        f"\t):",
         f"\t\tkwargs.update({{",
         *[
             f"\t\t\t\t'{arg_name}': {arg_name},"
@@ -128,7 +138,8 @@ def defineRemoteClass(
         f"\t\t\t'{server_uri}',",
         f"\t\t\t'{class_key}',",
         f"\t\t\tinit_args_dict = kwargs,",
-        f"\t\t\tdelete_remote_on_del = {delete_remote_on_del},",
+        f"\t\t\tremote_object_id = remote_object_id,",
+        f"\t\t\tdelete_remote_on_del = delete_remote_on_del,",
         f"\t\t)",
         # f"\t\tprint(f'`{class_key}Remote`.__init__({{kwargs}})')",
         f"\t\tresponse = self._get(",
