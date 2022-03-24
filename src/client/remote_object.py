@@ -156,10 +156,10 @@ def defineRemoteClass(
     definition_loc =  [f"class {class_key}Remote(RemoteObject):"]
     definition_loc += [
         "\tdef __init__("
-        "\t\t{}{}{},".format(
+        "{}{}{},".format(
             ', '.join(init_req_args),
             ', ' if len(init_opt_args) > 0 else '',
-            ', '.join(f'{name}:{default}' for name, default in init_opt_args.items()),
+            ', '.join(f'{name}={default}' for name, default in init_opt_args.items()),
         ),
         f"\t\tremote_object_id = None,",
         f"\t\tdelete_remote_on_del = {delete_remote_on_del},",

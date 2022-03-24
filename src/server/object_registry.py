@@ -95,7 +95,7 @@ class ObjectRegistry(object):
                 args.append(function_args_dict.pop(namedargname))
 
         if function_name == '__init__':
-            return obj(*args[1:], **function_args_dict)
+            return obj(*args, **function_args_dict)
         else:
             return func(*args, **function_args_dict)
     
