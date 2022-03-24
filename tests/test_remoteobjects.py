@@ -2,7 +2,6 @@
 
 # Server imports
 from flask import Flask
-from flask_restful import Api
 from remoteobjects.server import addRemoteObjectResources
 
 # Client imports
@@ -95,7 +94,7 @@ if __name__ == '__main__':
     # start a Flask server, adding remote-object resources to the RESTful API
     app = Flask(__name__)
     addRemoteObjectResources(
-        Api(app),
+        app,
         [Dummy]
     )
     server_thread = threading.Thread(target=app.run, kwargs={'host':'0.0.0.0', 'port':6000, 'debug':False}, daemon=True)
