@@ -5,8 +5,8 @@ class RestClient(object):
     def __init__(self, server_uri, server_version_string = None):
         self._server_uri = server_uri
         if server_version_string is not None:
-            version_response = self._get(
-                'version',
+            version_response = requests.get(
+                server_uri + '/version',
             ).json()['response']
             if version_response != server_version_string:
                 raise RuntimeError(f'Server\'s version `{version_response}` != `{server_version_string}`')
@@ -24,14 +24,11 @@ class RestClient(object):
 
         if data is None and files is None:
             response = request_func(url=uri, params=params)
-        elif files is not None:
-            response = request_func(url=uri, params=params, files=files)
-        else: # data is only non-None
+        elif data is not None and (files is None or len(files) == 0):
             reqdata, header = self._content_type(data)
             response = request_func(url=uri, params=params, data=reqdata, headers=header)
-        
-        if response.status_code != 200:
-            raise RuntimeError(response.json())
+        else: # data and files
+            response = request_func(url=uri, params=params, data=data, files=files)
         return response
 
     def _delete(self, endpoint, data = None, params = {}):

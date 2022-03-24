@@ -11,6 +11,7 @@ from remoteobjects.client import defineRemoteClass, RestClient
 import time
 import threading
 import unittest
+import os
 
 class TestRemoteObject(unittest.TestCase):
     @classmethod
@@ -45,6 +46,11 @@ class TestRemoteObject(unittest.TestCase):
         remoteDummy = DummyRemote(dumbness = 'A tired subject')
         with self.assertRaises(RuntimeError) as err:
             remoteDummy.add(31, '11')
+    
+    def test_method_filepath_upload(self):
+        remoteDummy = DummyRemote(dumbness = 'A tired subject')
+        script_dir, _ = os.path.split(os.path.realpath(__file__))
+        self.assertTrue(remoteDummy.file_contains_affirmative(script_dir + '/affirmative.txt'))
     
     def test_id_control(self):
         remoteDummy = DummyRemote(
@@ -90,6 +96,11 @@ if __name__ == '__main__':
 
         def add(self, a, b):
             return a + b
+
+        def file_contains_affirmative(self, filepath):
+            with open(filepath, 'r') as fio:
+                content = fio.read()
+                return content.startswith('SUCCESS')
 
     # start a Flask server, adding remote-object resources to the RESTful API
     app = Flask(__name__)
