@@ -6,7 +6,7 @@ from flask_restful import Api
 from remoteobjects.server import addRemoteObjectResources
 
 # Client imports
-from remoteobjects.client import defineRemoteClass
+from remoteobjects.client import defineRemoteClass, RestClient
 
 # Unit Testing imports
 import time
@@ -46,6 +46,33 @@ class TestRemoteObject(unittest.TestCase):
         remoteDummy = DummyRemote(dumbness = 'A tired subject')
         with self.assertRaises(RuntimeError) as err:
             remoteDummy.add(31, '11')
+    
+    def test_id_control(self):
+        remoteDummy = DummyRemote(
+            dumbness = 'Resilient',
+            remote_object_id='PersistentDummy',
+            delete_remote_on_del=False
+        )
+        remoteDummy.__del__()
+
+        client = RestClient('http://localhost:6000')
+        response = client._get(
+            'registry',
+            params = {
+                'class_key': 'Dummy',
+                'object_id': 'PersistentDummy'
+            }
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.json()['new_object'])
+
+        response = client._delete(
+            'registry',
+            params = {
+                'object_id': 'PersistentDummy'
+            }
+        )
+        self.assertEqual(response.status_code, 200)
 
 ###############################################################################
 
