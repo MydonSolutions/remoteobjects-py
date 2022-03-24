@@ -210,3 +210,26 @@ def defineRemoteClass(
         print(f'`{definition_code}`')
         raise err
     globals_dict[f"{class_key}Remote"] = local_env_dict[f"{class_key}Remote"]
+
+
+def defineRemoteClasses(
+    server_uri,
+    globals_dict,
+    delete_remote_on_del = True,
+    allowed_upload_extension_regex = r'.*'
+):
+    r = RestClient(server_uri, __VERSION__)
+    class_keys_response = r._get(
+        'registry'
+    )
+    if class_keys_response.status_code != 200:
+        raise RuntimeError(class_keys_response.json())
+    for class_key in class_keys_response.json()['class_keys']:
+        print(f'Defining {class_key}Remote...')
+        defineRemoteClass(
+            class_key,
+            server_uri,
+            globals_dict,
+            delete_remote_on_del,
+            allowed_upload_extension_regex
+        )
