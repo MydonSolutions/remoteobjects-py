@@ -53,7 +53,9 @@ class RemoteObjectEndpoint_Registry(Resource):
             # confirm the object at ID matches the type of Key,
             # or if the object_id is empty register an a new object by key,
             # setting its ID
-            if not object_id in object_registry._registered_obj_dict:
+            new_object = False
+            if object_id not in __REMOTE_OBJECT_REGISTRY__._registered_obj_dict:
+                new_object = True
                 try:
                     temp_id = __REMOTE_OBJECT_REGISTRY__.register_new_object(class_key, self._arg_dict(request))
                     __REMOTE_OBJECT_REGISTRY__.obj_set_id(temp_id, object_id)
@@ -65,10 +67,10 @@ class RemoteObjectEndpoint_Registry(Resource):
             try:
                 obj = __REMOTE_OBJECT_REGISTRY__.get_registered_object(object_id)
                 return {
-                    'return': obj.__name__ == class_key,
-                    'object_id': object_id,
+                    'return': obj.__class__.__name__ == class_key,
+                    'id': object_id,
+                    'new_object': new_object,
                     'class_key': class_key,
-                    'object__name__': obj.__name__,
                     'object': str(obj),
                 }, 200
             except BaseException as err:
