@@ -204,11 +204,14 @@ class RemoteObjectEndpoint_Version(Resource):
 def addRemoteObjectResources(flask_app, class_list):
     global __REMOTE_OBJECT_REGISTRY__
     global __UPLOAD_DIRECTORY__
+    global __ALLOWED_EXTENSION_REGEX__
 
     if 'UPLOAD_DIRECTORY' in flask_app.config:
         __UPLOAD_DIRECTORY__ = flask_app.config['UPLOAD_DIRECTORY']
     if 'ALLOWED_EXTENSION_REGEX' in flask_app.config:
-        __ALLOWED_EXTENSION_REGEX__ = flask_app.config['ALLOWED_EXTENSION_REGEX']
+        __ALLOWED_EXTENSION_REGEX__ = flask_app.config[
+            'ALLOWED_EXTENSION_REGEX'
+        ]
 
     __REMOTE_OBJECT_REGISTRY__ = ObjectRegistry(class_list)
 
