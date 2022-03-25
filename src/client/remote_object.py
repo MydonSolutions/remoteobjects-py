@@ -112,8 +112,8 @@ class RemoteObject(RestClient):
             }
         )
         if response.status_code != 200:
-            raise RuntimeError(registration_response.json())
-        self._remote_object_id = registration_response.json()['id']
+            raise RuntimeError(response.json())
+        self._remote_object_id = response.json()['id']
 
     def _define_remote_function_loc(self,
         func_name,
