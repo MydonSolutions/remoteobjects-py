@@ -62,7 +62,7 @@ class TestRemoteObject(unittest.TestCase):
 
         client = RestClient('http://localhost:6000')
         response = client._get(
-            'registry',
+            'remoteobjects/registry',
             params = {
                 'class_key': 'Dummy',
                 'object_id': 'PersistentDummy'
@@ -72,7 +72,7 @@ class TestRemoteObject(unittest.TestCase):
         self.assertFalse(response.json()['new_object'])
 
         response = client._delete(
-            'registry',
+            'remoteobjects/registry',
             params = {
                 'object_id': 'PersistentDummy'
             }

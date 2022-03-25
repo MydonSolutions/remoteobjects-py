@@ -199,8 +199,8 @@ def addRemoteObjectResources(flask_app, class_list):
     __REMOTE_OBJECT_REGISTRY__ = ObjectRegistry(class_list)
 
     flask_api = Api(flask_app)
-    flask_api.add_resource(RemoteObjectEndpoint_Signature, '/registry/signature')
-    flask_api.add_resource(RemoteObjectEndpoint_Registry, '/registry')
-    flask_api.add_resource(RemoteObjectEndpoint_Upload, '/upload')
-    flask_api.add_resource(RemoteObjectEndpoint_Version, '/version')
+    flask_api.add_resource(RemoteObjectEndpoint_Signature, '/remoteobjects/registry/signature')
+    flask_api.add_resource(RemoteObjectEndpoint_Registry, '/remoteobjects/registry')
+    flask_api.add_resource(RemoteObjectEndpoint_Upload, '/remoteobjects/upload')
+    flask_api.add_resource(RemoteObjectEndpoint_Version, '/remoteobjects/version')
     return flask_api

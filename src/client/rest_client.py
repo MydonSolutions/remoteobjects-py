@@ -2,14 +2,8 @@ import requests
 import json
 
 class RestClient(object):
-    def __init__(self, server_uri, server_version_string = None):
+    def __init__(self, server_uri):
         self._server_uri = server_uri
-        if server_version_string is not None:
-            version_response = requests.get(
-                server_uri + '/version',
-            ).json()['response']
-            if version_response != server_version_string:
-                raise RuntimeError(f'Server\'s version `{version_response}` != `{server_version_string}`')
 
     @staticmethod
     def _content_type(data): # returns converted data, {"Content-Type": }

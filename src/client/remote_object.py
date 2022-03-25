@@ -15,7 +15,8 @@ class RemoteObject(RestClient):
         remote_object_id = None,
         allowed_upload_extension_regex = r'.*',
     ):
-        super().__init__(server_uri, __VERSION__)
+        self._confirm_server_version(server_uri)
+        super().__init__(server_uri)
         self._allowed_extension_regex = allowed_upload_extension_regex
 
         params = {
@@ -27,7 +28,7 @@ class RemoteObject(RestClient):
         self.files_uploaded = {}
 
         registration_response = self._get(
-            'registry',
+            'remoteobjects/registry',
             params = params,
             data = init_args_dict
         )
@@ -35,6 +36,14 @@ class RemoteObject(RestClient):
             raise RuntimeError(registration_response.json())
         self._remote_object_id = registration_response.json()['id']
         self._del_remote = delete_remote_on_del
+
+    @staticmethod
+    def _confirm_server_version(server_uri):
+        version_response = requests.get(
+            server_uri + '/remoteobjects/version',
+        ).json()['response']
+        if version_response != __VERSION__:
+            raise RuntimeError(f'Server\'s version `{version_response}` != `{__VERSION__}`')
 
     def _manage_CRUD_request(self, request_func, endpoint, data = None, params = {}, files = None):
         if 'object_id' not in params and hasattr(self, '_remote_object_id'):
@@ -54,7 +63,7 @@ class RemoteObject(RestClient):
                     files_uploaded[data_arg] = open(data_arg_val, 'rb')
             
         if len(files_uploaded) > 0:
-            upload_response = super()._manage_CRUD_request(requests.put, 'upload', files = files_uploaded)
+            upload_response = super()._manage_CRUD_request(requests.put, 'remoteobjects/upload', files = files_uploaded)
             if upload_response.status_code != 200:
                 raise RuntimeError(f'Failed to upload file arguments: {files_uploaded}')
             for data_arg, data_arg_filepath in upload_response.json()['files_uploaded'].items():
@@ -79,7 +88,7 @@ class RemoteObject(RestClient):
         self._delete_files_uploaded()
         if self._del_remote:
             self._delete(
-                'registry',
+                'remoteobjects/registry',
                 params = {
                     'object_id': self._remote_object_id
                 }
@@ -96,7 +105,7 @@ class RemoteObject(RestClient):
 
     def _set_id(self, new_id):
         response = self._patch(
-            'registry',
+            'remoteobjects/registry',
             params = {
                 'old_id': self._remote_object_id,
                 'new_id': new_id,
@@ -111,7 +120,7 @@ class RemoteObject(RestClient):
         req_args,
         opt_args,
         crud_operation='post',
-        crud_endpoint='registry',
+        crud_endpoint='remoteobjects/registry',
     ):
         return [
             "def {}({}{}{}, **kwargs):".format(
@@ -156,9 +165,10 @@ def defineRemoteClass(
     delete_remote_on_del = True,
     allowed_upload_extension_regex = r'.*'
 ):
-    r = RestClient(server_uri, __VERSION__)
+    RemoteObject._confirm_server_version(server_uri)
+    r = RestClient(server_uri)
     init_signature_response = r._get(
-        'registry/signature',
+        'remoteobjects/registry/signature',
         params= {'class_key': class_key}
     )
     if init_signature_response.status_code != 200:
@@ -197,7 +207,7 @@ def defineRemoteClass(
         f"\t\t)",
         # f"\t\tprint(f'`{class_key}Remote`.__init__({{kwargs}})')",
         f"\t\tresponse = self._get(",
-        f"\t\t\t'registry/signature',",
+        f"\t\t\t'remoteobjects/registry/signature',",
         f"\t\t\tparams = {{'object_id': self._remote_object_id}},",
         f"\t\t)",
         # f"\t\tif response.status_code != 200:",
@@ -233,7 +243,7 @@ def defineRemoteClasses(
 ):
     r = RestClient(server_uri, __VERSION__)
     class_keys_response = r._get(
-        'registry'
+        'remoteobjects/registry'
     )
     if class_keys_response.status_code != 200:
         raise RuntimeError(class_keys_response.json())
