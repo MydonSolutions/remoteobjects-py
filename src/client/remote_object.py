@@ -16,7 +16,6 @@ class RemoteObject(RestClient):
         allowed_upload_extension_regex = r'.*',
     ):
         super().__init__(server_uri, __VERSION__)
-        self._del_remote = delete_remote_on_del
         self._allowed_extension_regex = allowed_upload_extension_regex
 
         params = {
@@ -24,6 +23,8 @@ class RemoteObject(RestClient):
         }
         if remote_object_id is not None:
             params['object_id'] = remote_object_id
+
+        self.files_uploaded = {}
 
         registration_response = self._get(
             'registry',
@@ -33,6 +34,7 @@ class RemoteObject(RestClient):
         if registration_response.status_code != 200:
             raise RuntimeError(registration_response.json())
         self._remote_object_id = registration_response.json()['id']
+        self._del_remote = delete_remote_on_del
 
     def _manage_CRUD_request(self, request_func, endpoint, data = None, params = {}, files = None):
         if 'object_id' not in params and hasattr(self, '_remote_object_id'):
@@ -59,20 +61,22 @@ class RemoteObject(RestClient):
                 files_uploaded[data_arg].close()
                 # update filepath arg_val to the server-local filepath returned
                 data[data_arg] = data_arg_filepath
+            
+            self._delete_files_uploaded(
+                [file_key_dupe for file_key_dupe in files_uploaded.keys()
+                    if file_key_dupe in self.files_uploaded
+                ]
+            )
+            self.files_uploaded.update(files_uploaded)
 
         fileless_response = super()._manage_CRUD_request(request_func, endpoint, data, params)
 
-        if len(files_uploaded) > 0:
-            upload_response = super()._delete('upload', data = {'file_keys': list(files_uploaded.keys())})
-            if upload_response.status_code != 200:
-                raise RuntimeError(f'Failed to delete uploaded {files_uploaded}, {upload_response.json()}')
-            
-        
         if fileless_response.status_code != 200:
             raise RuntimeError(fileless_response.json())
         return fileless_response
 
     def __del__(self):
+        self._delete_files_uploaded()
         if self._del_remote:
             self._delete(
                 'registry',
@@ -80,6 +84,15 @@ class RemoteObject(RestClient):
                     'object_id': self._remote_object_id
                 }
             )
+    
+    def _delete_files_uploaded(self, file_keys = None):
+        if file_keys is None:
+            file_keys = list(self.files_uploaded.keys())
+
+        if len(file_keys) > 0:
+            upload_response = super()._delete('upload', data = {'file_keys': file_keys})
+            if upload_response.status_code != 200:
+                raise RuntimeError(f'Failed to delete uploaded {file_keys}, {upload_response.json()}')
 
     def _set_id(self, new_id):
         response = self._patch(
