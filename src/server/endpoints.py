@@ -106,17 +106,24 @@ class RemoteObjectEndpoint_Registry(Resource):
         if class_key is None and object_id is None:
             # return the abstract-object keys available for registration
             return {
-                'class_keys': list(__REMOTE_OBJECT_REGISTRY__._abstract_class_key_dict.keys())
+                'class_keys': list(
+                    __REMOTE_OBJECT_REGISTRY__._abstract_class_key_dict.keys()
+                )
             }, 200
         elif object_id is not None and class_key is not None:
             # confirm the object at ID matches the type of Key,
             # or if the object_id is empty register an a new object by key,
             # setting its ID
             new_object = False
-            if object_id not in __REMOTE_OBJECT_REGISTRY__._registered_obj_dict:
+            if (object_id not in
+                __REMOTE_OBJECT_REGISTRY__._registered_obj_dict
+            ):
                 new_object = True
                 try:
-                    temp_id = __REMOTE_OBJECT_REGISTRY__.register_new_object(class_key, self._arg_dict(request))
+                    temp_id = __REMOTE_OBJECT_REGISTRY__.register_new_object(
+                        class_key,
+                        self._arg_dict(request)
+                    )
                     __REMOTE_OBJECT_REGISTRY__.obj_set_id(temp_id, object_id)
                 except BaseException as err:
                     return {
@@ -140,7 +147,10 @@ class RemoteObjectEndpoint_Registry(Resource):
             # register a new object by key, returning its ID
             try:
                 return {
-                    'id': __REMOTE_OBJECT_REGISTRY__.register_new_object(class_key, self._arg_dict(request))
+                    'id': __REMOTE_OBJECT_REGISTRY__.register_new_object(
+                        class_key,
+                        self._arg_dict(request)
+                    )
                 }, 200
             except BaseException as err:
                 return {
@@ -152,7 +162,11 @@ class RemoteObjectEndpoint_Registry(Resource):
         func_name = request.args.get('func_name', type = str)
         try:
             return {
-                'return': __REMOTE_OBJECT_REGISTRY__.obj_call_function(object_id, func_name, self._arg_dict(request))
+                'return': __REMOTE_OBJECT_REGISTRY__.obj_call_method(
+                    object_id,
+                    func_name,
+                    self._arg_dict(request)
+                )
             }, 200
         except BaseException as err:
             return {
