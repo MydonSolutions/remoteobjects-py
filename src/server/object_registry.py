@@ -1,5 +1,6 @@
 import types
 
+
 class ObjectRegistry(object):
     def __init__(self, registration_class_objects):
         '''
@@ -18,8 +19,8 @@ class ObjectRegistry(object):
     @staticmethod
     def _get_method_names(obj):
         return [d for d in dir(obj)
-            if isinstance(getattr(obj, d), types.MethodType)
-        ]
+                if isinstance(getattr(obj, d), types.MethodType)
+                ]
 
     @staticmethod
     def _get_function_args(func):
@@ -170,9 +171,9 @@ class ObjectRegistry(object):
             )
         if newid in self._registered_obj_dict:
             raise RuntimeError(("Proposed ID `{}` for object already used for "
-                "`{}`.").format(
-                    newid, self._registered_obj_dict[newid]
-                )
+                                "`{}`.").format(
+                newid, self._registered_obj_dict[newid]
+            )
             )
         self._registered_obj_dict[newid] = self._registered_obj_dict.pop(objid)
         return newid

@@ -6,15 +6,16 @@ import requests
 from .rest_client import RestClient
 from ..server import __VERSION__
 
+
 class RemoteObject(RestClient):
     def __init__(self,
-        server_uri,
-        class_key,
-        init_args_dict={},
-        delete_remote_on_del = True,
-        remote_object_id = None,
-        allowed_upload_extension_regex = r'.*',
-    ):
+                 server_uri,
+                 class_key,
+                 init_args_dict={},
+                 delete_remote_on_del=True,
+                 remote_object_id=None,
+                 allowed_upload_extension_regex=r'.*',
+                 ):
         self._confirm_server_version(server_uri)
         super().__init__(server_uri)
         self._allowed_extension_regex = allowed_upload_extension_regex
@@ -29,8 +30,8 @@ class RemoteObject(RestClient):
 
         registration_response = self._get(
             'remoteobjects/registry',
-            params = params,
-            data = init_args_dict
+            params=params,
+            data=init_args_dict
         )
         if registration_response.status_code != 200:
             raise RuntimeError(registration_response.json())
@@ -43,12 +44,20 @@ class RemoteObject(RestClient):
             server_uri + '/remoteobjects/version',
         ).json()['response']
         if version_response != __VERSION__:
-            raise RuntimeError(f'Server\'s version `{version_response}` != `{__VERSION__}`')
+            raise RuntimeError(
+                f'Server\'s version `{version_response}` != `{__VERSION__}`')
 
-    def _manage_CRUD_request(self, request_func, endpoint, data = None, params = {}, files = None):
+    def _manage_CRUD_request(
+        self,
+        request_func,
+        endpoint,
+        data=None,
+        params={},
+        files=None
+    ):
         if 'object_id' not in params and hasattr(self, '_remote_object_id'):
             params['object_id'] = self._remote_object_id
-        
+
         files_uploaded = {}
         # manage uploading data filepath values
         if data is not None and isinstance(data, dict):
@@ -58,27 +67,32 @@ class RemoteObject(RestClient):
                     re.match(
                         self._allowed_extension_regex,
                         path.splitext(data_arg_val)[1].lower()
-                    ) is not None 
+                ) is not None
                 ):
                     files_uploaded[data_arg] = open(data_arg_val, 'rb')
-            
+
         if len(files_uploaded) > 0:
-            upload_response = super()._manage_CRUD_request(requests.put, 'remoteobjects/upload', files = files_uploaded)
+            upload_response = super()._manage_CRUD_request(
+                requests.put, 'remoteobjects/upload', files=files_uploaded)
             if upload_response.status_code != 200:
-                raise RuntimeError(f'Failed to upload file arguments: {files_uploaded}')
-            for data_arg, data_arg_filepath in upload_response.json()['files_uploaded'].items():
+                raise RuntimeError(
+                    f'Failed to upload file arguments: {files_uploaded}')
+            for data_arg, data_arg_filepath in upload_response.json()[
+                'files_uploaded'
+            ].items():
                 files_uploaded[data_arg].close()
                 # update filepath arg_val to the server-local filepath returned
                 data[data_arg] = data_arg_filepath
-            
+
             self._delete_files_uploaded(
                 [file_key_dupe for file_key_dupe in files_uploaded.keys()
                     if file_key_dupe in self.files_uploaded
-                ]
+                 ]
             )
             self.files_uploaded.update(files_uploaded)
 
-        fileless_response = super()._manage_CRUD_request(request_func, endpoint, data, params)
+        fileless_response = super()._manage_CRUD_request(
+            request_func, endpoint, data, params)
 
         if fileless_response.status_code != 200:
             raise RuntimeError(fileless_response.json())
@@ -89,24 +103,27 @@ class RemoteObject(RestClient):
         if self._del_remote:
             self._delete(
                 'remoteobjects/registry',
-                params = {
+                params={
                     'object_id': self._remote_object_id
                 }
             )
-    
-    def _delete_files_uploaded(self, file_keys = None):
+
+    def _delete_files_uploaded(self, file_keys=None):
         if file_keys is None:
             file_keys = list(self.files_uploaded.keys())
 
         if len(file_keys) > 0:
-            upload_response = super()._delete('upload', data = {'file_keys': file_keys})
+            upload_response = super()._delete(
+                'upload', data={'file_keys': file_keys})
             if upload_response.status_code != 200:
-                raise RuntimeError(f'Failed to delete uploaded {file_keys}, {upload_response.json()}')
+                raise RuntimeError(
+                    (f'Failed to delete uploaded {file_keys}, '
+                      '{upload_response.json()}'))
 
     def _set_id(self, new_id):
         response = self._patch(
             'remoteobjects/registry',
-            params = {
+            params={
                 'old_id': self._remote_object_id,
                 'new_id': new_id,
             }
@@ -116,24 +133,25 @@ class RemoteObject(RestClient):
         self._remote_object_id = response.json()['id']
 
     def _define_remote_function_loc(self,
-        func_name,
-        req_args,
-        opt_args,
-        crud_operation='post',
-        crud_endpoint='remoteobjects/registry',
-    ):
+                                    func_name,
+                                    req_args,
+                                    opt_args,
+                                    crud_operation='post',
+                                    crud_endpoint='remoteobjects/registry',
+                                    ):
         return [
             "def {}({}{}{}, **kwargs):".format(
                 func_name,
                 ', '.join(req_args),
                 ', ' if len(opt_args) > 0 else '',
-                ', '.join(f"{argname}={default}" for (argname, default) in opt_args.items()),
+                ', '.join(f"{argname}={default}" for (
+                    argname, default) in opt_args.items()),
             ),
             f"\tkwargs.update({{",
             *[
                 f"\t\t\t'{arg_name}': {arg_name},"
                 for arg_name in req_args + list(opt_args.keys())
-                    if arg_name != 'self'
+                if arg_name != 'self'
             ],
             f"\t\t}}",
             f"\t)",
@@ -151,38 +169,41 @@ class RemoteObject(RestClient):
             f"\treturn resp.json()['return']",
             f"",
         ]
-    
+
     def _add_method_loc(self, func_name, func_loc):
         func_code = '\n'.join(func_loc)
         local_env_dict = {}
         exec(func_code, None, local_env_dict)
-        setattr(self, func_name, types.MethodType(local_env_dict[func_name], self))
+        setattr(self, func_name, types.MethodType(
+            local_env_dict[func_name], self))
+
 
 def defineRemoteClass(
     class_key,
     server_uri,
     globals_dict,
-    delete_remote_on_del = True,
-    allowed_upload_extension_regex = r'.*'
+    delete_remote_on_del=True,
+    allowed_upload_extension_regex=r'.*'
 ):
     RemoteObject._confirm_server_version(server_uri)
     r = RestClient(server_uri)
     init_signature_response = r._get(
         'remoteobjects/registry/signature',
-        params= {'class_key': class_key}
+        params={'class_key': class_key}
     )
     if init_signature_response.status_code != 200:
         raise RuntimeError(init_signature_response.json())
     init_signature = init_signature_response.json()['methods']['__init__']
     init_req_args, init_opt_args = init_signature[0], init_signature[1]
 
-    definition_loc =  [f"class {class_key}Remote(RemoteObject):"]
+    definition_loc = [f"class {class_key}Remote(RemoteObject):"]
     definition_loc += [
         "\tdef __init__("
         "{}{}{},".format(
             ', '.join(init_req_args),
             ', ' if len(init_opt_args) > 0 else '',
-            ', '.join(f'{name}={default}' for name, default in init_opt_args.items()),
+            ', '.join(f'{name}={default}' for name,
+                      default in init_opt_args.items()),
         ),
         f"\t\tremote_object_id = None,",
         f"\t\tdelete_remote_on_del = {delete_remote_on_del},",
@@ -193,7 +214,7 @@ def defineRemoteClass(
         *[
             f"\t\t\t\t'{arg_name}': {arg_name},"
             for arg_name in init_req_args + list(init_opt_args.keys())
-                if arg_name != 'self'
+            if arg_name != 'self'
         ],
         f"\t\t\t}}",
         f"\t\t)",
@@ -238,8 +259,8 @@ def defineRemoteClass(
 def defineRemoteClasses(
     server_uri,
     globals_dict,
-    delete_remote_on_del = True,
-    allowed_upload_extension_regex = r'.*'
+    delete_remote_on_del=True,
+    allowed_upload_extension_regex=r'.*'
 ):
     r = RestClient(server_uri, __VERSION__)
     class_keys_response = r._get(

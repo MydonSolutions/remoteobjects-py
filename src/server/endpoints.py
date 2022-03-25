@@ -1,5 +1,5 @@
 from flask import request
-from flask_restful import Resource, Api, reqparse
+from flask_restful import Resource, Api
 from werkzeug.utils import secure_filename
 import re
 import os.path
@@ -14,6 +14,7 @@ __UPLOAD_DIRECTORY__ = '/tmp'
 __ALLOWED_EXTENSION_REGEX__ = r'.*'
 
 __UPLOADED_FILE_DICT__ = {}
+
 
 class RemoteObjectEndpoint_Upload(Resource):
     @staticmethod
@@ -41,10 +42,10 @@ class RemoteObjectEndpoint_Upload(Resource):
             else:
                 __UPLOADED_FILE_DICT__.update(file_key_to_path_dict)
                 return {
-                        'error': f'Allowed extension regex `{__ALLOWED_EXTENSION_REGEX__}` not met.',
-                        'files_uploaded': file_key_to_path_dict
-                    }, 500
-        
+                    'error': f'Allowed extension regex `{__ALLOWED_EXTENSION_REGEX__}` not met.',
+                    'files_uploaded': file_key_to_path_dict
+                }, 500
+
         __UPLOADED_FILE_DICT__.update(file_key_to_path_dict)
         return {
             'files_uploaded': file_key_to_path_dict
@@ -70,9 +71,9 @@ class RemoteObjectEndpoint_Upload(Resource):
 
 class RemoteObjectEndpoint_Signature(Resource):
     def get(self):
-        class_key = request.args.get('class_key', default = None, type = str)
-        object_id = request.args.get('object_id', default = None, type = str)
-        
+        class_key = request.args.get('class_key', default=None, type=str)
+        object_id = request.args.get('object_id', default=None, type=str)
+
         if class_key is not None:
             # return the {method_name: method_signature...} of the class
             try:
@@ -95,14 +96,15 @@ class RemoteObjectEndpoint_Signature(Resource):
                     'error': f'{type(err)}: {str(err)}'
                 }, 500
 
+
 class RemoteObjectEndpoint_Registry(Resource):
     @staticmethod
     def _arg_dict(request):
         return request.json if request.json is not None else {}
 
     def get(self):
-        class_key = request.args.get('class_key', default = None, type = str)
-        object_id = request.args.get('object_id', default = None, type = str)
+        class_key = request.args.get('class_key', default=None, type=str)
+        object_id = request.args.get('object_id', default=None, type=str)
         if class_key is None and object_id is None:
             # return the abstract-object keys available for registration
             return {
@@ -116,8 +118,8 @@ class RemoteObjectEndpoint_Registry(Resource):
             # setting its ID
             new_object = False
             if (object_id not in
-                __REMOTE_OBJECT_REGISTRY__._registered_obj_dict
-            ):
+                        __REMOTE_OBJECT_REGISTRY__._registered_obj_dict
+                    ):
                 new_object = True
                 try:
                     temp_id = __REMOTE_OBJECT_REGISTRY__.register_new_object(
@@ -129,9 +131,10 @@ class RemoteObjectEndpoint_Registry(Resource):
                     return {
                         'error': f'{type(err)}: {str(err)}'
                     }, 500
-            
+
             try:
-                obj = __REMOTE_OBJECT_REGISTRY__.get_registered_object(object_id)
+                obj = __REMOTE_OBJECT_REGISTRY__.get_registered_object(
+                    object_id)
                 return {
                     'return': obj.__class__.__name__ == class_key,
                     'id': object_id,
@@ -158,8 +161,8 @@ class RemoteObjectEndpoint_Registry(Resource):
                 }, 500
 
     def post(self):
-        object_id = request.args.get('object_id', type = str)
-        func_name = request.args.get('func_name', type = str)
+        object_id = request.args.get('object_id', type=str)
+        func_name = request.args.get('func_name', type=str)
         try:
             return {
                 'return': __REMOTE_OBJECT_REGISTRY__.obj_call_method(
@@ -174,8 +177,8 @@ class RemoteObjectEndpoint_Registry(Resource):
             }, 500
 
     def patch(self):
-        object_id = request.args.get('old_id', type = str)
-        new_id = request.args.get('new_id', type = str)
+        object_id = request.args.get('old_id', type=str)
+        new_id = request.args.get('new_id', type=str)
         try:
             return {
                 'id': __REMOTE_OBJECT_REGISTRY__.obj_set_id(object_id, new_id)
@@ -186,7 +189,7 @@ class RemoteObjectEndpoint_Registry(Resource):
             }, 500
 
     def delete(self):
-        object_id = request.args.get('object_id', type = str)
+        object_id = request.args.get('object_id', type=str)
         try:
             __REMOTE_OBJECT_REGISTRY__.deregister_object(object_id)
             return {}, 200
@@ -195,11 +198,13 @@ class RemoteObjectEndpoint_Registry(Resource):
                 'error': f'{type(err)}: {err}'
             }, 500
 
+
 class RemoteObjectEndpoint_Version(Resource):
     def get(self):
         return {
             'response': __VERSION__
         }, 200
+
 
 def addRemoteObjectResources(flask_app, class_list):
     global __REMOTE_OBJECT_REGISTRY__
@@ -216,8 +221,12 @@ def addRemoteObjectResources(flask_app, class_list):
     __REMOTE_OBJECT_REGISTRY__ = ObjectRegistry(class_list)
 
     flask_api = Api(flask_app)
-    flask_api.add_resource(RemoteObjectEndpoint_Signature, '/remoteobjects/registry/signature')
-    flask_api.add_resource(RemoteObjectEndpoint_Registry, '/remoteobjects/registry')
-    flask_api.add_resource(RemoteObjectEndpoint_Upload, '/remoteobjects/upload')
-    flask_api.add_resource(RemoteObjectEndpoint_Version, '/remoteobjects/version')
+    flask_api.add_resource(RemoteObjectEndpoint_Signature,
+                           '/remoteobjects/registry/signature')
+    flask_api.add_resource(RemoteObjectEndpoint_Registry,
+                           '/remoteobjects/registry')
+    flask_api.add_resource(RemoteObjectEndpoint_Upload,
+                           '/remoteobjects/upload')
+    flask_api.add_resource(RemoteObjectEndpoint_Version,
+                           '/remoteobjects/version')
     return flask_api
