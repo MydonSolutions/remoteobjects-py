@@ -97,7 +97,7 @@ if __name__ == '__main__':
                 self.dumbness = kwargs['dumbness']
             return self.dumbness
 
-        def add(self, a, b):
+        def add(self, a: int, b: int):
             return a + b
 
         def file_contains_affirmative(self, filepath):

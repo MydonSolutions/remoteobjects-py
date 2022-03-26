@@ -1,4 +1,5 @@
 import types
+import inspect
 
 
 class ObjectRegistry(object):
@@ -18,45 +19,51 @@ class ObjectRegistry(object):
 
     @staticmethod
     def _get_method_names(obj):
-        return [d for d in dir(obj)
-                if isinstance(getattr(obj, d), types.MethodType)
-                ]
+        return [
+            name
+            for (name, _) in inspect.getmembers(
+                obj,
+                lambda a: inspect.ismethod(a)
+            )
+        ]
+
+    @staticmethod
+    def _get_parameter_dict(param: inspect.Parameter):
+        ret = {
+            'code_string': str(param)
+        }
+        if param.default != inspect.Parameter.empty:
+            ret['default'] = param.default
+        return ret
 
     @staticmethod
     def _get_function_args(func):
         '''
         Return
         ------
-        (list, dict): required_argument_names, {named_argument: default_value}
+        (dict): {name: {
+                'code_string': code-string, ?'default': default}
+            }
         '''
         if not (
             isinstance(func, types.FunctionType) or
             isinstance(func, types.MethodType)
         ):
             raise RuntimeError(f'`{func}` is not a functinon nor method')
-
-        function_code = getattr(func, '__code__')
-        function_argnames = function_code.co_varnames[
-            :function_code.co_argcount
-        ]
-        defaults = func.__defaults__
-        # kwdefaults = func.__kwdefaults__
-
-        req_argcount = function_code.co_argcount
-        if defaults is not None:
-            req_argcount -= len(defaults)
-
-        req_args = []
-        args = {}
-        for (i, arg) in enumerate(function_argnames):
-            if i >= req_argcount:
-                args[arg] = defaults[i-req_argcount]
-            else:
-                req_args.append(arg)
-        return req_args, args
+        return {
+            key: ObjectRegistry._get_parameter_dict(parameter)
+            for (key, parameter) in inspect.signature(func).parameters.items()
+        }
 
     @staticmethod
     def _obj_method_signature(obj, method_name):
+        '''
+        Return
+        ------
+        (dict): {name: {
+                'code_string': code-string, ?'default': default}
+            }
+        '''
         if (hasattr(obj, method_name)):
             func = getattr(obj, method_name)
         else:
@@ -80,29 +87,40 @@ class ObjectRegistry(object):
                     method_name
                 )
             )
-        method_reqargs, method_args = ObjectRegistry._get_function_args(func)
+        method_parameters = ObjectRegistry._get_function_args(func)
 
         # build argument list
         args = []
-        for reqargname in method_reqargs:
-            if reqargname == 'self':
+        kwargs = {}
+        for argname, argdict in method_parameters.items():
+            if argname == 'self':
                 # args.append(obj)
                 continue
-            if reqargname not in method_args_dict:
-                raise RuntimeError("Missing required argument `{}`.".format(
-                    reqargname)
-                )
-            args.append(method_args_dict.pop(reqargname))
-        for (namedargname, default) in method_args.items():
-            if namedargname not in method_args_dict:
-                args.append(default)
+            elif argdict['code_string'].startswith('**'):
+                # kwargs
+                kwargs.update(method_args_dict)
+                method_args_dict.clear()
+            elif argname not in method_args_dict:
+                if 'default' not in argdict:
+                    raise RuntimeError(
+                        "Missing required argument `{}`.".format(
+                            argname
+                        )
+                    )
+                else:
+                    kwargs[argname] = argdict['default']
             else:
-                args.append(method_args_dict.pop(namedargname))
+                args.append(method_args_dict.pop(argname))
+        
+        if len(method_args_dict) > 0:
+            raise RuntimeError(
+                f"Unexpected arguments: {method_args_dict}"
+            )
 
         if method_name == '__init__':
-            return obj(*args, **method_args_dict)
+            return obj(*args, **kwargs)
         else:
-            return func(*args, **method_args_dict)
+            return func(*args, **kwargs)
 
     def get_registered_object(self, objid):
         if objid not in self._registered_obj_dict:

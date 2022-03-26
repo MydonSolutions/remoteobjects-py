@@ -133,47 +133,61 @@ class RemoteObject(RestClient):
         self._remote_object_id = response.json()['id']
 
     def _define_remote_function_loc(self,
-                                    func_name,
-                                    req_args,
-                                    opt_args,
-                                    crud_operation='post',
-                                    crud_endpoint='remoteobjects/registry',
+                                    func_name: str,
+                                    parameters: dict,
+                                    crud_operation: str = 'post',
+                                    crud_endpoint: str = 'remoteobjects/registry',
                                     ):
-        return [
-            "def {}({}{}{}, **kwargs):".format(
+        last_param_key = list(parameters)[-1]
+        kwargs_param_present = parameters[
+            last_param_key]['code_string'].startswith('**')
+        loc = [
+            "def {}({}):".format(
                 func_name,
-                ', '.join(req_args),
-                ', ' if len(opt_args) > 0 else '',
-                ', '.join(f"{argname}={default}" for (
-                    argname, default) in opt_args.items()),
+                ','.join(['self'] + [
+                    param_dict['code_string']
+                        for param_dict in parameters.values()
+                ])
             ),
-            f"\tkwargs.update({{",
+            f"\targs = {{",
             *[
                 f"\t\t\t'{arg_name}': {arg_name},"
-                for arg_name in req_args + list(opt_args.keys())
-                if arg_name != 'self'
+                for arg_name in parameters.keys()
+                if arg_name != 'self' and not (
+                    kwargs_param_present and
+                    arg_name == last_param_key
+                )
             ],
-            f"\t\t}}",
-            f"\t)",
+            f"\t}}",
+        ]
+        if kwargs_param_present:
+            loc.append(f"\targs.update({last_param_key})")
+
+        loc += [
             f"\tresp = self._{crud_operation}(",
             f"\t\t'{crud_endpoint}',",
             f"\t\tparams = {{",
             f"\t\t\t'object_id': self._remote_object_id,",
             f"\t\t\t'func_name': '{func_name}',",
             f"\t\t}},",
-            f"\t\tdata = kwargs,",
+            f"\t\tdata = args,",
             f"\t)",
             f"\t",
-            # f"\tif resp.status_code != 200:",
-            # f"\t\traise RuntimeError(resp.json())",
+            f"\tif resp.status_code != 200:",
+            f"\t\traise RuntimeError(resp.json())",
             f"\treturn resp.json()['return']",
             f"",
         ]
+        return loc
 
     def _add_method_loc(self, func_name, func_loc):
         func_code = '\n'.join(func_loc)
         local_env_dict = {}
-        exec(func_code, None, local_env_dict)
+        try:
+            exec(func_code, None, local_env_dict)
+        except BaseException as err:
+            print(f"`{func_code}`")
+            raise err
         setattr(self, func_name, types.MethodType(
             local_env_dict[func_name], self))
 
@@ -194,26 +208,31 @@ def defineRemoteClass(
     if init_signature_response.status_code != 200:
         raise RuntimeError(init_signature_response.json())
     init_signature = init_signature_response.json()['methods']['__init__']
-    init_req_args, init_opt_args = init_signature[0], init_signature[1]
+    last_param_key = list(init_signature)[-1]
+    kwargs_param_present = init_signature[last_param_key]['code_string'].startswith('**')
+    if kwargs_param_present:
+        init_signature.pop(last_param_key)
 
     definition_loc = [f"class {class_key}Remote(RemoteObject):"]
     definition_loc += [
-        "\tdef __init__("
-        "{}{}{},".format(
-            ', '.join(init_req_args),
-            ', ' if len(init_opt_args) > 0 else '',
-            ', '.join(f'{name}={default}' for name,
-                      default in init_opt_args.items()),
+        "\tdef __init__({},".format(
+            ','.join([
+                param_dict['code_string']
+                    for param_dict in init_signature.values()
+            ])
         ),
         f"\t\tremote_object_id = None,",
         f"\t\tdelete_remote_on_del = {delete_remote_on_del},",
         f"\t\tallowed_upload_extension_regex = r'{allowed_upload_extension_regex}',",
-        f"\t\t**kwargs",
+    ]
+    if kwargs_param_present:
+        definition_loc.append(f"\t\t**kwargs")
+    definition_loc += [
         f"\t):",
         f"\t\tkwargs.update({{",
         *[
             f"\t\t\t\t'{arg_name}': {arg_name},"
-            for arg_name in init_req_args + list(init_opt_args.keys())
+            for arg_name in init_signature.keys()
             if arg_name != 'self'
         ],
         f"\t\t\t}}",
@@ -234,14 +253,13 @@ def defineRemoteClass(
         # f"\t\tif response.status_code != 200:",
         # f"\t\t\traise RuntimeError(response.json())",
         f"",
-        f"\t\tfor (name, signature) in response.json()['methods'].items():",
+        f"\t\tfor (name, parameters) in response.json()['methods'].items():",
         f"\t\t\tif name != '__init__':",
         f"\t\t\t\tself._add_method_loc(",
         f"\t\t\t\t\tname,",
         f"\t\t\t\t\tself._define_remote_function_loc(",
         f"\t\t\t\t\t\tname,",
-        f"\t\t\t\t\t\tsignature[0], #required argument names",
-        f"\t\t\t\t\t\tsignature[1], #defaulted argument name:value dict",
+        f"\t\t\t\t\t\tparameters, # name:code-string dict",
         f"\t\t\t\t\t)",
         f"\t\t\t\t)",
         f"",
