@@ -111,7 +111,7 @@ class ObjectRegistry(object):
                     kwargs[argname] = argdict['default']
             else:
                 args.append(method_args_dict.pop(argname))
-        
+
         if len(method_args_dict) > 0:
             raise RuntimeError(
                 f"Unexpected arguments: {method_args_dict}"
@@ -129,17 +129,6 @@ class ObjectRegistry(object):
             )
         return self._registered_obj_dict[objid]
 
-    def obj_method_names(self, objid):
-        return self._get_method_names(
-            self.get_registered_object(objid)
-        )
-
-    def obj_method_signature(self, objid, method_name):
-        return self._obj_method_signature(
-            self.get_registered_object(objid),
-            method_name
-        )
-
     def obj_interface_signature(self, objid):
         obj = self.get_registered_object(objid)
         return {
@@ -147,7 +136,7 @@ class ObjectRegistry(object):
             for method_name in self._get_method_names(obj)
         }
 
-    def class_interface_signature(self, class_key):
+    def class_init_signature(self, class_key):
         if class_key not in self._abstract_class_key_dict:
             raise RuntimeError("No such class: `{}`".format(class_key))
         class_obj = self._abstract_class_key_dict[class_key]

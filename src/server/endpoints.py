@@ -78,7 +78,7 @@ class RemoteObjectEndpoint_Signature(Resource):
             # return the {method_name: method_signature...} of the class
             try:
                 return {
-                    'methods': __REMOTE_OBJECT_REGISTRY__.class_interface_signature(class_key)
+                    'methods': __REMOTE_OBJECT_REGISTRY__.class_init_signature(class_key)
                 }, 200
             except BaseException as err:
                 return {
