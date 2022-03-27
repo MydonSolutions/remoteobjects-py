@@ -1,5 +1,6 @@
 import types
 import inspect
+import re
 
 
 class ObjectRegistry(object):
@@ -16,6 +17,18 @@ class ObjectRegistry(object):
             key: 0 for key in self._abstract_class_key_dict.keys()
         }
         self._registered_obj_dict = {}
+
+    @staticmethod
+    def _get_attributes(obj):
+        return {
+            name: value.__class__.__name__
+            for (name, value) in inspect.getmembers(
+                obj, lambda a: not inspect.isroutine(a)
+            )
+            if (re.match(r'__.*__', name) is None
+                and value.__class__.__module__ == 'builtins'
+            )
+        }
 
     @staticmethod
     def _get_method_names(obj):
@@ -129,11 +142,14 @@ class ObjectRegistry(object):
             )
         return self._registered_obj_dict[objid]
 
-    def obj_interface_signature(self, objid):
+    def obj_signature(self, objid):
         obj = self.get_registered_object(objid)
         return {
-            method_name: self._obj_method_signature(obj, method_name)
-            for method_name in self._get_method_names(obj)
+            'methods': {
+                method_name: self._obj_method_signature(obj, method_name)
+                for method_name in self._get_method_names(obj)
+            },
+            'attributes': self._get_attributes(obj)
         }
 
     def class_init_signature(self, class_key):
