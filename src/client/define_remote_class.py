@@ -21,7 +21,7 @@ def defineRemoteClass(
         raise RuntimeError(init_signature_response.json())
     init_signature = init_signature_response.json()['methods']['__init__']
 
-    definition_loc = [f"class {class_key}Remote(RemoteObject):"]
+    definition_loc = ['', f"class {class_key}Remote(RemoteObject):"]
     definition_loc += _define_remote_constructor(
         init_signature,
         server_uri,
@@ -30,7 +30,7 @@ def defineRemoteClass(
         allowed_upload_extension_regex
     )
 
-    definition_code = '\n'.join([''] + definition_loc)
+    definition_code = '\n'.join(definition_loc)
     local_env_dict = {}
     try:
         exec(definition_code, None, local_env_dict)
