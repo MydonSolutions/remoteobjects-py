@@ -89,6 +89,8 @@ class RemoteObject(RestClient):
                 raise RuntimeError(
                     (f'Failed to delete uploaded {file_keys}, '
                       '{upload_response.json()}'))
+            for file_key in file_keys:
+                self.files_uploaded.pop(file_key)
 
     def _define_remote_function_loc(self,
                                     func_name: str,
