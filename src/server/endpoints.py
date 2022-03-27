@@ -116,8 +116,8 @@ class RemoteObjectEndpoint_Registry(Resource):
             # setting its ID
             new_object = False
             if (object_id not in
-                        __REMOTE_OBJECT_REGISTRY__._registered_obj_dict
-                    ):
+                __REMOTE_OBJECT_REGISTRY__._registered_obj_dict
+                ):
                 new_object = True
                 try:
                     temp_id = __REMOTE_OBJECT_REGISTRY__.register_new_object(
