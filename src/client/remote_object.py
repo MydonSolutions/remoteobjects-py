@@ -95,6 +95,8 @@ class RemoteObject(RestClient):
     def _define_remote_function_loc(self,
                                     func_name: str,
                                     parameters: dict,
+                                    remote_root_object_id: str,
+                                    attribute_absolute_path: str = None,
                                     crud_operation: str = 'post',
                                     crud_endpoint: str = 'remoteobjects/registry',
                                     ):
@@ -127,7 +129,11 @@ class RemoteObject(RestClient):
             f"\tresp = self._{crud_operation}(",
             f"\t\t'{crud_endpoint}',",
             f"\t\tparams = {{",
-            f"\t\t\t'object_id': self._remote_object_id,",
+            f"\t\t\t'object_id': '{remote_root_object_id}',",
+        ]
+        if attribute_absolute_path is not None:
+            loc.append(f"\t\t\t'attribute_path': '{attribute_absolute_path}',")
+        loc += [
             f"\t\t\t'func_name': '{func_name}',",
             f"\t\t}},",
             f"\t\tdata = args,",
@@ -148,39 +154,47 @@ class RemoteObject(RestClient):
         setattr(self, func_name, types.MethodType(
             local_env_dict[func_name], self))
 
-    def _get_attribute(self, attribute_path):
+    def _get_attribute(self, remote_root_object_id, attribute_absolute_path):
+        params = {
+            'object_id': remote_root_object_id,
+        }
+        if attribute_absolute_path is not None:
+            params['attribute_path'] = attribute_absolute_path
         response = self._get(
             'remoteobjects/registry',
-            params={
-                'object_id': self._remote_object_id,
-                'attribute_path': attribute_path
-            }
+            params=params
         )
         return response.json()['value']
 
-    def _set_attribute(self, attribute_path, value):
+    def _set_attribute(self, remote_root_object_id, attribute_absolute_path, value):
         if value.__class__.__module__ != 'builtins':
             raise RuntimeError(
-                f'Cannot set remote attribute `{attribute_path}` to ' +
+                f'Cannot set remote attribute `{attribute_absolute_path}` to ' +
                 f'non-primitive value {value} <{value.__class__}>.'
             )
+        params = {
+            'object_id': remote_root_object_id,
+        }
+        if attribute_absolute_path is not None:
+            params['attribute_path'] = attribute_absolute_path
         self._put(
             'remoteobjects/registry',
-            params={
-                'object_id': self._remote_object_id,
-                'attribute_path': attribute_path
-            },
+            params=params,
             data={'value': value}
         )
 
-    def _add_property(self, property_name):
+    def _add_property(self, remote_root_object_id, attribute_absolute_path):
         setattr(
             self.__class__,
-            property_name,
+            attribute_absolute_path.split('.')[-1],
             property(
-                fget=lambda self: self._get_attribute(property_name),
+                fget=lambda self: self._get_attribute(
+                    remote_root_object_id,
+                    attribute_absolute_path
+                ),
                 fset=lambda self, value: self._set_attribute(
-                    property_name,
+                    remote_root_object_id,
+                    attribute_absolute_path,
                     value
                 ),
                 fdel=None,

@@ -19,14 +19,16 @@ class ObjectRegistry(object):
         self._registered_obj_dict = {}
 
     @staticmethod
-    def _get_attributes(obj):
+    def _get_attributes(obj, builtins_not_custom=True):
         return {
             name: value.__class__.__name__
             for (name, value) in inspect.getmembers(
                 obj, lambda a: not inspect.isroutine(a)
             )
             if (re.match(r'__.*__', name) is None
-                and value.__class__.__module__ == 'builtins'
+                and not (builtins_not_custom ^
+                    (value.__class__.__module__ == 'builtins')
+                )
             )
         }
 
@@ -142,22 +144,41 @@ class ObjectRegistry(object):
             )
         return self._registered_obj_dict[objid]
 
+    @staticmethod
+    def _traverse_attribute_path(obj, attribute_path):
+        attributes = attribute_path.split('.')
+        attribute_final = attributes.pop()
+        for attr in attributes:
+            obj = getattr(obj, attr)
+        return obj, attribute_final
+
+    def _obj_attribute(self, obj, attribute_path):
+        obj_leaf, attribute = self._traverse_attribute_path(obj, attribute_path)
+        return getattr(obj_leaf, attribute)
+
     def obj_attribute(self, objid, attribute_path):
         obj = self.get_registered_object(objid)
-        return getattr(obj, attribute_path)
+        return self._obj_attribute(obj, attribute_path)
+
+    def _obj_attribute_set(self, obj, attribute_path, value):
+        obj_leaf, attribute = self._traverse_attribute_path(obj, attribute_path)
+        setattr(obj_leaf, attribute, value)
 
     def obj_attribute_set(self, objid, attribute_path, value):
         obj = self.get_registered_object(objid)
-        setattr(obj, attribute_path, value)
+        return self._obj_attribute_set(obj, attribute_path, value)
 
-    def obj_signature(self, objid):
+    def obj_signature(self, objid, attribute_path=None):
         obj = self.get_registered_object(objid)
+        if attribute_path is not None:
+            obj = self._obj_attribute(obj, attribute_path)
         return {
             'methods': {
                 method_name: self._obj_method_signature(obj, method_name)
                 for method_name in self._get_method_names(obj)
             },
-            'attributes': self._get_attributes(obj)
+            'attributes': self._get_attributes(obj, builtins_not_custom=True),
+            'attributes_nonbuiltins': self._get_attributes(obj, builtins_not_custom=False),
         }
 
     def class_init_signature(self, class_key):
@@ -169,9 +190,18 @@ class ObjectRegistry(object):
             for method_name in ['__init__']
         }
 
-    def obj_call_method(self, objid, method_name, method_args_dict={}):
+    def obj_call_method(
+        self,
+        objid,
+        method_name,
+        method_args_dict={},
+        attribute_path=None
+    ):
+        obj = self.get_registered_object(objid)
+        if attribute_path is not None:
+            obj = self._obj_attribute(obj, attribute_path)
         return self._obj_call_method(
-            self.get_registered_object(objid),
+            obj,
             method_name,
             method_args_dict
         )

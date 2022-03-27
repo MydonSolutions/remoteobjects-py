@@ -1,4 +1,5 @@
 from .remote_object import RemoteObject
+from .remote_attribute import RemoteAttribute
 
 
 class RemoteInstance(RemoteObject):
@@ -15,7 +16,6 @@ class RemoteInstance(RemoteObject):
             server_uri,
             allowed_upload_extension_regex
         )
-        self._allowed_extension_regex = allowed_upload_extension_regex
 
         params = {
             'class_key': class_key,

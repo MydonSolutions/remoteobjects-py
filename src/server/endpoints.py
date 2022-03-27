@@ -73,6 +73,7 @@ class RemoteObjectEndpoint_Signature(Resource):
     def get(self):
         class_key = request.args.get('class_key', default=None, type=str)
         object_id = request.args.get('object_id', default=None, type=str)
+        attribute_path = request.args.get('attribute_path', default=None, type=str)
 
         if class_key is not None:
             # return the {method_name: method_signature...} of the class
@@ -88,7 +89,7 @@ class RemoteObjectEndpoint_Signature(Resource):
             # return the {method_name: method_signature...} of the registered
             # object
             try:
-                return __REMOTE_OBJECT_REGISTRY__.obj_signature(object_id), 200
+                return __REMOTE_OBJECT_REGISTRY__.obj_signature(object_id, attribute_path), 200
             except BaseException as err:
                 return {
                     'error': f'{type(err)}: {str(err)}'
@@ -207,12 +208,18 @@ class RemoteObjectEndpoint_Registry(Resource):
     def post(self):
         object_id = request.args.get('object_id', type=str)
         func_name = request.args.get('func_name', type=str)
+        attribute_path = request.args.get(
+            'attribute_path',
+            default=None,
+            type=str
+        )
         try:
             return {
                 'return': __REMOTE_OBJECT_REGISTRY__.obj_call_method(
                     object_id,
                     func_name,
-                    self._arg_dict(request)
+                    self._arg_dict(request),
+                    attribute_path = attribute_path
                 )
             }, 200
         except BaseException as err:

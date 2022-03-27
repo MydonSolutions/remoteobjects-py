@@ -92,15 +92,39 @@ class TestRemoteObject(unittest.TestCase):
     def test_property_method(self):
         remoteDummy = DummyRemote(dumbness='A tired subject')
         self.assertTrue(remoteDummy.dumbness.endswith('subject'))
+    
+    def test_nested_access(self):
+        remoteDummy = DummyRemote(dumbness='A tired subject')
+        self.assertEqual(remoteDummy.nested_object.str_attribute, 'Nested')
+        remoteDummy.nested_object.str_attribute = 'Accessed!'
+        self.assertEqual(remoteDummy.nested_object.str_attribute, 'Accessed!')
+    
+    def test_nested_method(self):
+        remoteDummy = DummyRemote(dumbness='A tired subject')
+        self.assertEqual(remoteDummy.nested_object.int_attribute, 420)
+        remoteDummy.nested_object.increment(-378)
+        self.assertEqual(remoteDummy.nested_object.int_attribute, 42)
 
 ###############################################################################
 
 
 if __name__ == '__main__':
+    class Nested(object):
+        def __init__(self, **kwargs):
+            self.int_attribute = 420
+            self.str_attribute = 'Hello World!'
+            if 'string' in kwargs:
+                self.str_attribute = kwargs['string']
+
+        def increment(self, inc=1):
+            self.int_attribute += inc
+            return self.int_attribute
+    
     # define a simple class to be offered in the remote-object server
     class Dummy(object):
         def __init__(self, **kwargs):
             self.int_attribute: int = 1
+            self.nested_object: Nested = Nested(string='Nested')
             self.dumbness = 'Not at all'
             if 'dumbness' in kwargs:
                 self.dumbness = kwargs['dumbness']
