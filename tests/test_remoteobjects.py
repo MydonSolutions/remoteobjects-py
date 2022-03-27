@@ -80,6 +80,18 @@ class TestRemoteObject(unittest.TestCase):
             }
         )
         self.assertEqual(response.status_code, 200)
+    
+    def test_property_access(self):
+        remoteDummy = DummyRemote(dumbness='A tired subject')
+        self.assertTrue(isinstance(remoteDummy.dumbness, str))
+        self.assertTrue(isinstance(remoteDummy.int_attribute, int))
+        self.assertEqual(remoteDummy.dumbness, 'A tired subject')
+        remoteDummy.dumbness = 'A tried subject'
+        self.assertEqual(remoteDummy.dumbness, 'A tried subject')
+    
+    def test_property_method(self):
+        remoteDummy = DummyRemote(dumbness='A tired subject')
+        self.assertTrue(remoteDummy.dumbness.endswith('subject'))
 
 ###############################################################################
 
@@ -88,6 +100,7 @@ if __name__ == '__main__':
     # define a simple class to be offered in the remote-object server
     class Dummy(object):
         def __init__(self, **kwargs):
+            self.int_attribute: int = 1
             self.dumbness = 'Not at all'
             if 'dumbness' in kwargs:
                 self.dumbness = kwargs['dumbness']

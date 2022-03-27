@@ -103,6 +103,7 @@ class RemoteObjectEndpoint_Registry(Resource):
     def get(self):
         class_key = request.args.get('class_key', default=None, type=str)
         object_id = request.args.get('object_id', default=None, type=str)
+        attribute_path = request.args.get('attribute_path', default=None, type=str)
         if class_key is None and object_id is None:
             # return the abstract-object keys available for registration
             return {
@@ -157,6 +158,51 @@ class RemoteObjectEndpoint_Registry(Resource):
                 return {
                     'error': f'{type(err)}: {str(err)}'
                 }, 500
+        elif object_id is not None and attribute_path is not None:
+            # return the value of the object's attribute
+            try:
+                return {
+                    'value': __REMOTE_OBJECT_REGISTRY__.obj_attribute(
+                        object_id,
+                        attribute_path
+                    )
+                }, 200
+            except BaseException as err:
+                return {
+                    'error': f'{type(err)}: {str(err)}'
+                }, 500
+        return {
+            'errror': 'Unsupported parameter combination.',
+            'class_key': class_key,
+            'object_id': object_id,
+            'attribute_path': attribute_path,
+        }, 500
+
+    def put(self):
+        object_id = request.args.get('object_id', default=None, type=str)
+        attribute_path = request.args.get(
+            'attribute_path',
+            default=None,
+            type=str
+        )
+        if object_id is not None and attribute_path is not None:
+            # return the value of the object's attribute
+            try:
+                __REMOTE_OBJECT_REGISTRY__.obj_attribute_set(
+                    object_id,
+                    attribute_path,
+                    request.json['value']
+                )
+                return {}, 200
+            except BaseException as err:
+                return {
+                    'error': f'{type(err)}: {str(err)}'
+                }, 500
+        return {
+            'errror': 'Unsupported parameter combination. Both must be supplied.',
+            'object_id': object_id,
+            'attribute_path': attribute_path,
+        }, 500
 
     def post(self):
         object_id = request.args.get('object_id', type=str)

@@ -172,9 +172,6 @@ class RemoteObject(RestClient):
             f"\t\t}},",
             f"\t\tdata = args,",
             f"\t)",
-            f"\t",
-            f"\tif resp.status_code != 200:",
-            f"\t\traise RuntimeError(resp.json())",
             f"\treturn resp.json()['return']",
             f"",
         ]
@@ -190,3 +187,43 @@ class RemoteObject(RestClient):
             raise err
         setattr(self, func_name, types.MethodType(
             local_env_dict[func_name], self))
+
+    def _get_attribute(self, attribute_path):
+        response = self._get(
+            'remoteobjects/registry',
+            params={
+                'object_id': self._remote_object_id,
+                'attribute_path': attribute_path
+            }
+        )
+        return response.json()['value']
+
+    def _set_attribute(self, attribute_path, value):
+        if value.__class__.__module__ != 'builtins':
+            raise RuntimeError(
+                f'Cannot set remote attribute `{attribute_path}` to ' +
+                f'non-primitive value {value} <{value.__class__}>.'
+            )
+        self._put(
+            'remoteobjects/registry',
+            params={
+                'object_id': self._remote_object_id,
+                'attribute_path': attribute_path
+            },
+            data={'value': value}
+        )
+
+    def _add_property(self, property_name):
+        setattr(
+            self.__class__,
+            property_name,
+            property(
+                fget=lambda self: self._get_attribute(property_name),
+                fset=lambda self, value: self._set_attribute(
+                    property_name,
+                    value
+                ),
+                fdel=None,
+                doc=None,
+            )
+        )

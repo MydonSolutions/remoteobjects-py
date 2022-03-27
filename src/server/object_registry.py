@@ -142,6 +142,14 @@ class ObjectRegistry(object):
             )
         return self._registered_obj_dict[objid]
 
+    def obj_attribute(self, objid, attribute_path):
+        obj = self.get_registered_object(objid)
+        return getattr(obj, attribute_path)
+
+    def obj_attribute_set(self, objid, attribute_path, value):
+        obj = self.get_registered_object(objid)
+        setattr(obj, attribute_path, value)
+
     def obj_signature(self, objid):
         obj = self.get_registered_object(objid)
         return {

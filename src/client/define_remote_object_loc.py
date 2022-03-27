@@ -61,6 +61,8 @@ def _define_remote_constructor(
         f"\t\t\t\t\t\tparameters, # name:code-string dict",
         f"\t\t\t\t\t)",
         f"\t\t\t\t)",
+        f"\t\tfor (name, _) in response.json()['attributes'].items():",
+        f"\t\t\tself._add_property(name)",
         f"",
     ]
     return definition_loc
