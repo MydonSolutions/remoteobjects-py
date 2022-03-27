@@ -84,7 +84,7 @@ class RemoteObject(RestClient):
 
         if len(file_keys) > 0:
             upload_response = super()._delete(
-                'upload', data={'file_keys': file_keys})
+                'remoteobjects/upload', data={'file_keys': file_keys})
             if upload_response.status_code != 200:
                 raise RuntimeError(
                     (f'Failed to delete uploaded {file_keys}, '
