@@ -9,8 +9,8 @@ class RemoteAttribute(RemoteObject):
                  allowed_upload_extension_regex=r'.*'
                  ):
         super().__init__(
-                server_uri,
-                allowed_upload_extension_regex
+            server_uri,
+            allowed_upload_extension_regex
         )
         self._remote_root_object_id = root_object_id
         self._attribute_path = attribute_path
@@ -28,7 +28,7 @@ class RemoteAttribute(RemoteObject):
                     name,
                     self._define_remote_function_loc(
                         name,
-                        parameters, # name:code-string dict
+                        parameters,  # name:code-string dict
                         self._remote_root_object_id,
                         attribute_absolute_path=self._attribute_path
                     )
@@ -45,4 +45,3 @@ class RemoteAttribute(RemoteObject):
                 f'{self._attribute_path}.{name}',
                 allowed_upload_extension_regex
             ))
-

@@ -88,7 +88,7 @@ class RemoteObject(RestClient):
             if upload_response.status_code != 200:
                 raise RuntimeError(
                     (f'Failed to delete uploaded {file_keys}, '
-                      '{upload_response.json()}'))
+                     '{upload_response.json()}'))
             for file_key in file_keys:
                 self.files_uploaded.pop(file_key)
 
@@ -98,7 +98,8 @@ class RemoteObject(RestClient):
                                     remote_root_object_id: str,
                                     attribute_absolute_path: str = None,
                                     crud_operation: str = 'post',
-                                    crud_endpoint: str = 'remoteobjects/registry',
+                                    crud_endpoint: str = ('remoteobjects/'
+                                                          'registry'),
                                     ):
         last_param_key = list(parameters)[-1]
         kwargs_param_present = parameters[
@@ -108,10 +109,10 @@ class RemoteObject(RestClient):
                 func_name,
                 ','.join(['self'] + [
                     param_dict['code_string']
-                        for param_dict in parameters.values()
+                    for param_dict in parameters.values()
                 ])
             ),
-            f"\targs = {{",
+            "\targs = {",
             *[
                 f"\t\t\t'{arg_name}': {arg_name},"
                 for arg_name in parameters.keys()
@@ -120,7 +121,7 @@ class RemoteObject(RestClient):
                     arg_name == last_param_key
                 )
             ],
-            f"\t}}",
+            "\t}",
         ]
         if kwargs_param_present:
             loc.append(f"\targs.update({last_param_key})")
@@ -128,18 +129,18 @@ class RemoteObject(RestClient):
         loc += [
             f"\tresp = self._{crud_operation}(",
             f"\t\t'{crud_endpoint}',",
-            f"\t\tparams = {{",
+            "\t\tparams = {",
             f"\t\t\t'object_id': '{remote_root_object_id}',",
         ]
         if attribute_absolute_path is not None:
             loc.append(f"\t\t\t'attribute_path': '{attribute_absolute_path}',")
         loc += [
             f"\t\t\t'func_name': '{func_name}',",
-            f"\t\t}},",
-            f"\t\tdata = args,",
-            f"\t)",
-            f"\treturn resp.json()['return']",
-            f"",
+            "\t\t},",
+            "\t\tdata = args,",
+            "\t)",
+            "\treturn resp.json()['return']",
+            "",
         ]
         return loc
 
@@ -166,11 +167,16 @@ class RemoteObject(RestClient):
         )
         return response.json()['value']
 
-    def _set_attribute(self, remote_root_object_id, attribute_absolute_path, value):
+    def _set_attribute(
+        self,
+        remote_root_object_id,
+        attribute_absolute_path,
+        value
+    ):
         if value.__class__.__module__ != 'builtins':
             raise RuntimeError(
-                f'Cannot set remote attribute `{attribute_absolute_path}` to ' +
-                f'non-primitive value {value} <{value.__class__}>.'
+                f'Cannot set remote attribute `{attribute_absolute_path}` to' +
+                f' non-primitive value {value} <{value.__class__}>.'
             )
         params = {
             'object_id': remote_root_object_id,

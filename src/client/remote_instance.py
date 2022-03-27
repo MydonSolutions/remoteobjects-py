@@ -1,5 +1,4 @@
 from .remote_object import RemoteObject
-from .remote_attribute import RemoteAttribute
 
 
 class RemoteInstance(RemoteObject):

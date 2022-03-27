@@ -80,7 +80,7 @@ class TestRemoteObject(unittest.TestCase):
             }
         )
         self.assertEqual(response.status_code, 200)
-    
+
     def test_property_access(self):
         remoteDummy = DummyRemote(dumbness='A tired subject')
         self.assertTrue(isinstance(remoteDummy.dumbness, str))
@@ -88,17 +88,17 @@ class TestRemoteObject(unittest.TestCase):
         self.assertEqual(remoteDummy.dumbness, 'A tired subject')
         remoteDummy.dumbness = 'A tried subject'
         self.assertEqual(remoteDummy.dumbness, 'A tried subject')
-    
+
     def test_property_method(self):
         remoteDummy = DummyRemote(dumbness='A tired subject')
         self.assertTrue(remoteDummy.dumbness.endswith('subject'))
-    
+
     def test_nested_access(self):
         remoteDummy = DummyRemote(dumbness='A tired subject')
         self.assertEqual(remoteDummy.nested_object.str_attribute, 'Nested')
         remoteDummy.nested_object.str_attribute = 'Accessed!'
         self.assertEqual(remoteDummy.nested_object.str_attribute, 'Accessed!')
-    
+
     def test_nested_method(self):
         remoteDummy = DummyRemote(dumbness='A tired subject')
         self.assertEqual(remoteDummy.nested_object.int_attribute, 420)
@@ -119,7 +119,7 @@ if __name__ == '__main__':
         def increment(self, inc=1):
             self.int_attribute += inc
             return self.int_attribute
-    
+
     # define a simple class to be offered in the remote-object server
     class Dummy(object):
         def __init__(self, **kwargs):

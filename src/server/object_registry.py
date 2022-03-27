@@ -27,9 +27,9 @@ class ObjectRegistry(object):
             )
             if (re.match(r'__.*__', name) is None
                 and not (builtins_not_custom ^
-                    (value.__class__.__module__ == 'builtins')
+                         (value.__class__.__module__ == 'builtins')
+                         )
                 )
-            )
         }
 
     @staticmethod
@@ -153,7 +153,8 @@ class ObjectRegistry(object):
         return obj, attribute_final
 
     def _obj_attribute(self, obj, attribute_path):
-        obj_leaf, attribute = self._traverse_attribute_path(obj, attribute_path)
+        obj_leaf, attribute = self._traverse_attribute_path(
+            obj, attribute_path)
         return getattr(obj_leaf, attribute)
 
     def obj_attribute(self, objid, attribute_path):
@@ -161,7 +162,8 @@ class ObjectRegistry(object):
         return self._obj_attribute(obj, attribute_path)
 
     def _obj_attribute_set(self, obj, attribute_path, value):
-        obj_leaf, attribute = self._traverse_attribute_path(obj, attribute_path)
+        obj_leaf, attribute = self._traverse_attribute_path(
+            obj, attribute_path)
         setattr(obj_leaf, attribute, value)
 
     def obj_attribute_set(self, objid, attribute_path, value):
@@ -178,7 +180,10 @@ class ObjectRegistry(object):
                 for method_name in self._get_method_names(obj)
             },
             'attributes': self._get_attributes(obj, builtins_not_custom=True),
-            'attributes_nonbuiltins': self._get_attributes(obj, builtins_not_custom=False),
+            'attributes_nonbuiltins': self._get_attributes(
+                obj,
+                builtins_not_custom=False
+            ),
         }
 
     def class_init_signature(self, class_key):

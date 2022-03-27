@@ -42,7 +42,8 @@ class RemoteObjectEndpoint_Upload(Resource):
             else:
                 __UPLOADED_FILE_DICT__.update(file_key_to_path_dict)
                 return {
-                    'error': f'Allowed extension regex `{__ALLOWED_EXTENSION_REGEX__}` not met.',
+                    'error': ('Allowed extension regex '
+                              f'`{__ALLOWED_EXTENSION_REGEX__}` not met.'),
                     'files_uploaded': file_key_to_path_dict
                 }, 500
 
@@ -73,13 +74,16 @@ class RemoteObjectEndpoint_Signature(Resource):
     def get(self):
         class_key = request.args.get('class_key', default=None, type=str)
         object_id = request.args.get('object_id', default=None, type=str)
-        attribute_path = request.args.get('attribute_path', default=None, type=str)
+        attribute_path = request.args.get(
+            'attribute_path', default=None, type=str)
 
         if class_key is not None:
             # return the {method_name: method_signature...} of the class
             try:
                 return {
-                    'methods': __REMOTE_OBJECT_REGISTRY__.class_init_signature(class_key)
+                    'methods': __REMOTE_OBJECT_REGISTRY__.class_init_signature(
+                        class_key
+                    )
                 }, 200
             except BaseException as err:
                 return {
@@ -89,7 +93,10 @@ class RemoteObjectEndpoint_Signature(Resource):
             # return the {method_name: method_signature...} of the registered
             # object
             try:
-                return __REMOTE_OBJECT_REGISTRY__.obj_signature(object_id, attribute_path), 200
+                return __REMOTE_OBJECT_REGISTRY__.obj_signature(
+                    object_id,
+                    attribute_path
+                ), 200
             except BaseException as err:
                 return {
                     'error': f'{type(err)}: {str(err)}'
@@ -104,7 +111,8 @@ class RemoteObjectEndpoint_Registry(Resource):
     def get(self):
         class_key = request.args.get('class_key', default=None, type=str)
         object_id = request.args.get('object_id', default=None, type=str)
-        attribute_path = request.args.get('attribute_path', default=None, type=str)
+        attribute_path = request.args.get(
+            'attribute_path', default=None, type=str)
         if class_key is None and object_id is None:
             # return the abstract-object keys available for registration
             return {
@@ -119,7 +127,7 @@ class RemoteObjectEndpoint_Registry(Resource):
             new_object = False
             if (object_id not in
                 __REMOTE_OBJECT_REGISTRY__._registered_obj_dict
-                ):
+            ):
                 new_object = True
                 try:
                     temp_id = __REMOTE_OBJECT_REGISTRY__.register_new_object(
@@ -200,7 +208,8 @@ class RemoteObjectEndpoint_Registry(Resource):
                     'error': f'{type(err)}: {str(err)}'
                 }, 500
         return {
-            'errror': 'Unsupported parameter combination. Both must be supplied.',
+            'errror': ('Unsupported parameter combination. Both `object_id` '
+                       'and `attribute_path` must be supplied.'),
             'object_id': object_id,
             'attribute_path': attribute_path,
         }, 500
@@ -219,7 +228,7 @@ class RemoteObjectEndpoint_Registry(Resource):
                     object_id,
                     func_name,
                     self._arg_dict(request),
-                    attribute_path = attribute_path
+                    attribute_path=attribute_path
                 )
             }, 200
         except BaseException as err:
