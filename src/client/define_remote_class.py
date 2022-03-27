@@ -1,3 +1,4 @@
+from .remote_instance import RemoteInstance
 from .remote_object import RemoteObject
 from .rest_client import RestClient
 from ..server import __VERSION__
@@ -21,7 +22,7 @@ def defineRemoteClass(
         raise RuntimeError(init_signature_response.json())
     init_signature = init_signature_response.json()['methods']['__init__']
 
-    definition_loc = ['', f"class {class_key}Remote(RemoteObject):"]
+    definition_loc = ['', f"class {class_key}Remote(RemoteInstance):"]
     definition_loc += _define_remote_constructor(
         init_signature,
         server_uri,
