@@ -117,6 +117,24 @@ class TestRemoteObject(unittest.TestCase):
         remoteDummy.internal_object.nested_object.increment(-378)
         self.assertEqual(remoteDummy.internal_object.nested_object.int_attribute, 42)
 
+    def test_grandparent_access(self):
+        remoteDummy = DummyRemote(dumbness='That of a grandparent...')
+        self.assertEqual(
+            remoteDummy.internal_object.nested_object.grandparent,
+            remoteDummy
+        )
+        self.assertEqual(
+            remoteDummy.internal_object.nested_object.grandparent.dumbness,
+            remoteDummy.dumbness
+        )
+    
+    def test_grandparent_method(self):
+        remoteDummy = DummyRemote(dumbness='That of a grandparent...')
+        self.assertEqual(
+            remoteDummy.internal_object.nested_object.grandparent.add(1, 1),
+            2
+        )
+
 ###############################################################################
 
 
@@ -127,16 +145,22 @@ if __name__ == '__main__':
             self.str_attribute = 'Hello World!'
             if 'string' in kwargs:
                 self.str_attribute = kwargs['string']
+            self.grandparent = None
+            if 'grandparent' in kwargs:
+                self.grandparent = kwargs['grandparent']
 
         def increment(self, inc=1):
             self.int_attribute += inc
             return self.int_attribute
 
     class Internal(object):
-        def __init__(self, string='Hello World!'):
+        def __init__(self, parent, string='Hello World!'):
             self.int_attr = 420
             self.str_attr = string
-            self.nested_object: Nested = Nested(string='Nested')
+            self.nested_object: Nested = Nested(
+                string='Nested',
+                grandparent=parent
+            )
 
         def decrement(self, dec=1):
             self.int_attr -= dec
@@ -149,7 +173,7 @@ if __name__ == '__main__':
     class Dummy(object):
         def __init__(self, **kwargs):
             self.int_attribute: int = 1
-            self.internal_object: Internal = Internal(string='Internal')
+            self.internal_object: Internal = Internal(self, string='Internal')
             self.dumbness = 'Not at all'
             if 'dumbness' in kwargs:
                 self.dumbness = kwargs['dumbness']

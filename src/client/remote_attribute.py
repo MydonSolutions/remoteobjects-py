@@ -6,12 +6,15 @@ class RemoteAttribute(RemoteObject):
                  server_uri: str,
                  root_object_id: str,
                  attribute_path: str,
+                 remote_object_str: str,
+                 ancestor_obj: dict,
                  allowed_upload_extension_regex=r'.*'
                  ):
         super().__init__(
             server_uri,
             allowed_upload_extension_regex
         )
+        ancestor_obj[remote_object_str] = self
         self._remote_root_object_id = root_object_id
         self._attribute_path = attribute_path
 
@@ -38,10 +41,15 @@ class RemoteAttribute(RemoteObject):
                 self._remote_root_object_id,
                 f'{self._attribute_path}.{name}'
             )
-        for (name, _) in response.json()['attributes_nonbuiltins'].items():
-            setattr(self, name, RemoteAttribute(
-                self._server_uri,
-                self._remote_root_object_id,
-                f'{self._attribute_path}.{name}',
-                allowed_upload_extension_regex
-            ))
+        for (name, obj_str) in response.json()['attributes_nonbuiltins'].items():
+            if obj_str in ancestor_obj:
+                setattr(self, name, ancestor_obj[obj_str])
+            else:
+                setattr(self, name, RemoteAttribute(
+                    self._server_uri,
+                    self._remote_root_object_id,
+                    f'{self._attribute_path}.{name}',
+                    obj_str,
+                    ancestor_obj,
+                    allowed_upload_extension_regex
+                ))

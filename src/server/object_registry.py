@@ -21,7 +21,7 @@ class ObjectRegistry(object):
     @staticmethod
     def _get_attributes(obj, builtins_not_custom=True):
         return {
-            name: value.__class__.__name__
+            name: str(value)
             for (name, value) in inspect.getmembers(
                 obj, lambda a: not inspect.isroutine(a)
             )
@@ -175,6 +175,7 @@ class ObjectRegistry(object):
         if attribute_path is not None:
             obj = self._obj_attribute(obj, attribute_path)
         return {
+            'object_str': str(obj),
             'methods': {
                 method_name: self._obj_method_signature(obj, method_name)
                 for method_name in self._get_method_names(obj)
