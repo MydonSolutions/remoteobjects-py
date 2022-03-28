@@ -93,17 +93,29 @@ class TestRemoteObject(unittest.TestCase):
         remoteDummy = DummyRemote(dumbness='A tired subject')
         self.assertTrue(remoteDummy.dumbness.endswith('subject'))
 
+    def test_internal_access(self):
+        remoteDummy = DummyRemote(dumbness='A tired subject')
+        self.assertEqual(remoteDummy.internal_object.str_attr, 'Internal')
+        remoteDummy.internal_object.str_attr = 'Accessed!'
+        self.assertEqual(remoteDummy.internal_object.str_attr, 'Accessed!')
+
+    def test_internal_method(self):
+        remoteDummy = DummyRemote(dumbness='A tired subject')
+        self.assertEqual(remoteDummy.internal_object.int_attr, 420)
+        remoteDummy.internal_object.decrement(378)
+        self.assertEqual(remoteDummy.internal_object.int_attr, 42)
+    
     def test_nested_access(self):
         remoteDummy = DummyRemote(dumbness='A tired subject')
-        self.assertEqual(remoteDummy.nested_object.str_attribute, 'Nested')
-        remoteDummy.nested_object.str_attribute = 'Accessed!'
-        self.assertEqual(remoteDummy.nested_object.str_attribute, 'Accessed!')
+        self.assertEqual(remoteDummy.internal_object.nested_object.str_attribute, 'Nested')
+        remoteDummy.internal_object.nested_object.str_attribute = 'Accessed!'
+        self.assertEqual(remoteDummy.internal_object.nested_object.str_attribute, 'Accessed!')
 
     def test_nested_method(self):
         remoteDummy = DummyRemote(dumbness='A tired subject')
-        self.assertEqual(remoteDummy.nested_object.int_attribute, 420)
-        remoteDummy.nested_object.increment(-378)
-        self.assertEqual(remoteDummy.nested_object.int_attribute, 42)
+        self.assertEqual(remoteDummy.internal_object.nested_object.int_attribute, 420)
+        remoteDummy.internal_object.nested_object.increment(-378)
+        self.assertEqual(remoteDummy.internal_object.nested_object.int_attribute, 42)
 
 ###############################################################################
 
@@ -120,11 +132,23 @@ if __name__ == '__main__':
             self.int_attribute += inc
             return self.int_attribute
 
+    class Internal(object):
+        def __init__(self, **kwargs):
+            self.int_attr = 420
+            self.str_attr = 'Hello World!'
+            self.nested_object: Nested = Nested(string='Nested')
+            if 'string' in kwargs:
+                self.str_attr = kwargs['string']
+
+        def decrement(self, dec=1):
+            self.int_attr -= dec
+            return self.int_attr
+
     # define a simple class to be offered in the remote-object server
     class Dummy(object):
         def __init__(self, **kwargs):
             self.int_attribute: int = 1
-            self.nested_object: Nested = Nested(string='Nested')
+            self.internal_object: Internal = Internal(string='Internal')
             self.dumbness = 'Not at all'
             if 'dumbness' in kwargs:
                 self.dumbness = kwargs['dumbness']
