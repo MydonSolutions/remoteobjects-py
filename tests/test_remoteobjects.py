@@ -133,12 +133,10 @@ if __name__ == '__main__':
             return self.int_attribute
 
     class Internal(object):
-        def __init__(self, **kwargs):
+        def __init__(self, string='Hello World!'):
             self.int_attr = 420
-            self.str_attr = 'Hello World!'
+            self.str_attr = string
             self.nested_object: Nested = Nested(string='Nested')
-            if 'string' in kwargs:
-                self.str_attr = kwargs['string']
 
         def decrement(self, dec=1):
             self.int_attr -= dec
