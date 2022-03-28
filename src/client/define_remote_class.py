@@ -48,7 +48,8 @@ def defineRemoteClasses(
     delete_remote_on_del=True,
     allowed_upload_extension_regex=r'.*'
 ):
-    r = RestClient(server_uri, __VERSION__)
+    RemoteObject._confirm_server_version(server_uri)
+    r = RestClient(server_uri)
     class_keys_response = r._get(
         'remoteobjects/registry'
     )
