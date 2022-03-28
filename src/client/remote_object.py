@@ -8,10 +8,11 @@ from ..server import __VERSION__
 
 
 class RemoteObject(RestClient):
-    def __init__(self,
-                 server_uri,
-                 allowed_upload_extension_regex=r'.*',
-                 ):
+    def __init__(
+        self,
+        server_uri,
+        allowed_upload_extension_regex=r'.*',
+    ):
         self._confirm_server_version(server_uri)
         super().__init__(server_uri)
         self._allowed_extension_regex = allowed_upload_extension_regex
@@ -92,18 +93,21 @@ class RemoteObject(RestClient):
             for file_key in file_keys:
                 self.files_uploaded.pop(file_key)
 
-    def _define_remote_function_loc(self,
-                                    func_name: str,
-                                    parameters: dict,
-                                    remote_root_object_id: str,
-                                    attribute_absolute_path: str = None,
-                                    crud_operation: str = 'post',
-                                    crud_endpoint: str = ('remoteobjects/'
-                                                          'registry'),
-                                    ):
-        last_param_key = list(parameters)[-1]
-        kwargs_param_present = parameters[
-            last_param_key]['code_string'].startswith('**')
+    def _define_remote_function_loc(
+        self,
+        func_name: str,
+        parameters: dict,
+        remote_root_object_id: str,
+        attribute_absolute_path: str = None,
+        crud_operation: str = 'post',
+        crud_endpoint: str = ('remoteobjects/'
+                              'registry'),
+    ):
+        kwargs_param_present = False
+        if len(parameters) > 0:
+            last_param_key = list(parameters)[-1]
+            kwargs_param_present = parameters[
+                last_param_key]['code_string'].startswith('**')
         loc = [
             "def {}({}):".format(
                 func_name,

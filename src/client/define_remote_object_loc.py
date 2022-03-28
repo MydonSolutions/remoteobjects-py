@@ -5,9 +5,12 @@ def _define_remote_constructor(
         delete_remote_on_del: bool,
         allowed_upload_extension_regex: str
 ):
-    last_param_key = list(init_signature)[-1]
-    kwargs_param_present = init_signature[last_param_key][
-        'code_string'].startswith('**')
+    kwargs_param_present = False
+    if len(init_signature) > 0:
+        last_param_key = list(init_signature)[-1]
+        kwargs_param_present = init_signature[last_param_key][
+            'code_string'].startswith('**')
+
     if kwargs_param_present:
         init_signature.pop(last_param_key)
 

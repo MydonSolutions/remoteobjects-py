@@ -142,6 +142,9 @@ if __name__ == '__main__':
             self.int_attr -= dec
             return self.int_attr
 
+        def print(self):
+            print(f'Internal(int:{self.int_attr}, str:{self.str_attr}')
+
     # define a simple class to be offered in the remote-object server
     class Dummy(object):
         def __init__(self, **kwargs):
