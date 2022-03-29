@@ -11,7 +11,8 @@ def defineRemoteClass(
     server_uri,
     globals_dict,
     delete_remote_on_del=True,
-    allowed_upload_extension_regex=r'.*'
+    allowed_upload_extension_regex=r'.*',
+    attribute_depth_allowance=0
 ):
     RemoteObject._confirm_server_version(server_uri)
     r = RestClient(server_uri)
@@ -29,7 +30,8 @@ def defineRemoteClass(
         server_uri,
         class_key,
         delete_remote_on_del,
-        allowed_upload_extension_regex
+        allowed_upload_extension_regex,
+        attribute_depth_allowance
     )
 
     definition_code = '\n'.join(definition_loc)
@@ -46,7 +48,8 @@ def defineRemoteClasses(
     server_uri,
     globals_dict,
     delete_remote_on_del=True,
-    allowed_upload_extension_regex=r'.*'
+    allowed_upload_extension_regex=r'.*',
+    attribute_depth_allowance=0
 ):
     RemoteObject._confirm_server_version(server_uri)
     r = RestClient(server_uri)
@@ -62,5 +65,6 @@ def defineRemoteClasses(
             server_uri,
             globals_dict,
             delete_remote_on_del,
-            allowed_upload_extension_regex
+            allowed_upload_extension_regex,
+            attribute_depth_allowance
         )

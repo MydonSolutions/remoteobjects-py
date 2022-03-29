@@ -3,7 +3,8 @@ def _define_remote_constructor(
         server_uri: str,
         class_key: str,
         delete_remote_on_del: bool,
-        allowed_upload_extension_regex: str
+        allowed_upload_extension_regex: str,
+        attribute_depth_allowance: int = 0
 ):
     kwargs_param_present = False
     if len(init_signature) > 0:
@@ -69,19 +70,23 @@ def _define_remote_constructor(
         "\t\t\t\t\t\tself._remote_object_id",
         "\t\t\t\t\t)",
         "\t\t\t\t)",
-        "\t\tfor (name, _) in response.json()['attributes'].items():",
-        "\t\t\tself._add_property(self._remote_object_id, name)",
-        "\t\tancestor_obj = {response.json()['object_str']: self}",
-        ("\t\tfor (name, obj_str) in response.json()["
-            "'attributes_nonprimitive'].items():"),
-        "\t\t\tsetattr(self, name, RemoteAttribute(",
-        "\t\t\t\tself._server_uri,",
-        "\t\t\t\tself._remote_object_id,",
-        "\t\t\t\tname,",
-        "\t\t\t\tobj_str,",
-        "\t\t\t\tancestor_obj,",
-        "\t\t\t\tallowed_upload_extension_regex",
-        "\t\t\t))",
-        "",
     ]
+    if attribute_depth_allowance != 0:
+        definition_loc += [
+            "\t\tfor (name, _) in response.json()['attributes'].items():",
+            "\t\t\tself._add_property(self._remote_object_id, name)",
+            "\t\tancestor_obj = {response.json()['object_str']: self}",
+            ("\t\tfor (name, obj_str) in response.json()["
+                "'attributes_nonprimitive'].items():"),
+            "\t\t\tsetattr(self, name, RemoteAttribute(",
+            "\t\t\t\tself._server_uri,",
+            "\t\t\t\tself._remote_object_id,",
+            "\t\t\t\tname,",
+            "\t\t\t\tobj_str,",
+            "\t\t\t\tancestor_obj,",
+            "\t\t\t\tallowed_upload_extension_regex,",
+            f"\t\t\t\t{attribute_depth_allowance-1}",
+            "\t\t\t))",
+            "",
+        ]
     return definition_loc
