@@ -148,7 +148,7 @@ class RemoteObjectEndpoint_Registry(Resource):
                     'id': object_id,
                     'new_object': new_object,
                     'class_key': class_key,
-                    'object_str': str(obj),
+                    'object_str': ObjectRegistry._object_str(obj),
                 }, 200
             except BaseException as err:
                 return {

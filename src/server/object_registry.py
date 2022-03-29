@@ -2,6 +2,15 @@ import types
 import inspect
 import re
 
+__PRIMITIVE_CLASSES__ = [
+    str,
+    int,
+    float,
+    bool,
+    # dict,
+    # list,
+]
+
 
 class ObjectRegistry(object):
     def __init__(self, registration_class_objects):
@@ -18,16 +27,20 @@ class ObjectRegistry(object):
         }
         self._registered_obj_dict = {}
 
+    @staticmethod 
+    def _object_str(obj):
+        return f'<{obj.__class__.__name__}>{hex(id(obj))}'
+
     @staticmethod
-    def _get_attributes(obj, builtins_not_custom=True):
+    def _get_attributes(obj, primitives_not_custom=True):
         return {
-            name: str(value)
+            name: ObjectRegistry._object_str(value)
             for (name, value) in inspect.getmembers(
                 obj, lambda a: not inspect.isroutine(a)
             )
             if (re.match(r'__.*__', name) is None
-                and not (builtins_not_custom ^
-                         (value.__class__.__module__ == 'builtins')
+                and not (primitives_not_custom ^
+                         (value.__class__ in __PRIMITIVE_CLASSES__)
                          )
                 )
         }
@@ -175,15 +188,15 @@ class ObjectRegistry(object):
         if attribute_path is not None:
             obj = self._obj_attribute(obj, attribute_path)
         return {
-            'object_str': str(obj),
+            'object_str': ObjectRegistry._object_str(obj),
             'methods': {
                 method_name: self._obj_method_signature(obj, method_name)
                 for method_name in self._get_method_names(obj)
             },
-            'attributes': self._get_attributes(obj, builtins_not_custom=True),
-            'attributes_nonbuiltins': self._get_attributes(
+            'attributes': self._get_attributes(obj, primitives_not_custom=True),
+            'attributes_nonprimitive': self._get_attributes(
                 obj,
-                builtins_not_custom=False
+                primitives_not_custom=False
             ),
         }
 

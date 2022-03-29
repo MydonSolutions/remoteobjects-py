@@ -17,6 +17,7 @@ class RemoteAttribute(RemoteObject):
         ancestor_obj[remote_object_str] = self
         self._remote_root_object_id = root_object_id
         self._attribute_path = attribute_path
+        self._remote_object_str = remote_object_str
 
         response = self._get(
             'remoteobjects/registry/signature',
@@ -41,7 +42,7 @@ class RemoteAttribute(RemoteObject):
                 self._remote_root_object_id,
                 f'{self._attribute_path}.{name}'
             )
-        for (name, obj_str) in response.json()['attributes_nonbuiltins'].items():
+        for (name, obj_str) in response.json()['attributes_nonprimitive'].items():
             if obj_str in ancestor_obj:
                 setattr(self, name, ancestor_obj[obj_str])
             else:
