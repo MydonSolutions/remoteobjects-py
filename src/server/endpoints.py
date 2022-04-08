@@ -140,7 +140,7 @@ class RemoteObjectEndpoint_Registry(Resource):
                     object_id,
                     attribute_path
                 )
-                if ObjectRegistry.class_is_primitive(value):
+                if ObjectRegistry.class_is_primitive(value.__class__):
                     return {
                         'value': value
                     }, 200
