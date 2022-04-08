@@ -1,6 +1,8 @@
-from distutils.core import setup
+from setuptools import setup
+from os import path
 
-with open("README.md", "r", encoding="utf-8") as fh:
+__file_dir__, _ = path.split(__file__)
+with open(path.join(__file_dir__, "README.md"), "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setup(name='remoteobjects',
@@ -13,8 +15,8 @@ setup(name='remoteobjects',
       url='https://github.com/MydonSolutions/remoteobjects-py',
       packages=['remoteobjects.client', 'remoteobjects.server'],
       package_dir={
-          'remoteobjects.client': 'src/client',
-          'remoteobjects.server': 'src/server',
+          'remoteobjects.client': path.join(__file_dir__, 'src/client'),
+          'remoteobjects.server': path.join(__file_dir__, 'src/server'),
       },
       classifiers=[
           'Programming Language :: Python :: 3',
