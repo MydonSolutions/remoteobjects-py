@@ -112,7 +112,7 @@ class RemoteObjectEndpoint_Registry(Resource):
         class_key = request.args.get('class_key', default=None, type=str)
         object_id = request.args.get('object_id', default=None, type=str)
         attribute_path = request.args.get(
-            'attribute_path', default=None, type=str)
+            'attribute_path', default="", type=str)
         if class_key is None and object_id is None:
             # return the abstract-object keys available for registration
             return {
@@ -120,40 +120,6 @@ class RemoteObjectEndpoint_Registry(Resource):
                     __REMOTE_OBJECT_REGISTRY__._abstract_class_key_dict.keys()
                 )
             }, 200
-        elif object_id is not None and class_key is not None:
-            # confirm the object at ID matches the type of Key,
-            # or if the object_id is empty register an a new object by key,
-            # setting its ID
-            new_object = False
-            if (object_id not in
-                __REMOTE_OBJECT_REGISTRY__._registered_obj_dict
-            ):
-                new_object = True
-                try:
-                    temp_id = __REMOTE_OBJECT_REGISTRY__.register_new_object(
-                        class_key,
-                        self._arg_dict(request)
-                    )
-                    __REMOTE_OBJECT_REGISTRY__.obj_set_id(temp_id, object_id)
-                except BaseException as err:
-                    return {
-                        'error': f'{type(err)}: {str(err)}'
-                    }, 500
-
-            try:
-                obj = __REMOTE_OBJECT_REGISTRY__.get_registered_object(
-                    object_id)
-                return {
-                    'return': obj.__class__.__name__ == class_key,
-                    'id': object_id,
-                    'new_object': new_object,
-                    'class_key': class_key,
-                    'object_str': ObjectRegistry._object_str(obj),
-                }, 200
-            except BaseException as err:
-                return {
-                    'error': f'{type(err)}: {str(err)}'
-                }, 500
         elif class_key is not None:
             # register a new object by key, returning its ID
             try:
@@ -167,15 +133,20 @@ class RemoteObjectEndpoint_Registry(Resource):
                 return {
                     'error': f'{type(err)}: {str(err)}'
                 }, 500
-        elif object_id is not None and attribute_path is not None:
+        elif object_id is not None:
             # return the value of the object's attribute
             try:
-                return {
-                    'value': __REMOTE_OBJECT_REGISTRY__.obj_attribute(
-                        object_id,
-                        attribute_path
-                    )
-                }, 200
+                value = __REMOTE_OBJECT_REGISTRY__.obj_attribute(
+                    object_id,
+                    attribute_path
+                )
+                if ObjectRegistry.class_is_primitive(value):
+                    return {
+                        'value': value
+                    }, 200
+                else:
+                    return ObjectRegistry._obj_signature(value), 200
+
             except BaseException as err:
                 return {
                     'error': f'{type(err)}: {str(err)}'

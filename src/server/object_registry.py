@@ -27,7 +27,11 @@ class ObjectRegistry(object):
         }
         self._registered_obj_dict = {}
 
-    @staticmethod 
+    @staticmethod
+    def class_is_primitive(class_obj):
+        return class_obj in __PRIMITIVE_CLASSES__
+
+    @staticmethod
     def _object_str(obj):
         return f'<{obj.__class__.__name__}>{hex(id(obj))}'
 
@@ -40,7 +44,7 @@ class ObjectRegistry(object):
             )
             if (re.match(r'__.*__', name) is None
                 and not (primitives_not_custom ^
-                         (value.__class__ in __PRIMITIVE_CLASSES__)
+                         ObjectRegistry.class_is_primitive(value.__class__)
                          )
                 )
         }
@@ -158,6 +162,28 @@ class ObjectRegistry(object):
         return self._registered_obj_dict[objid]
 
     @staticmethod
+    def _obj_signature(obj):
+        return {
+            'class': obj.__class__.__name__,
+            'object_str': ObjectRegistry._object_str(obj),
+            'methods': {
+                method_name: ObjectRegistry._obj_method_signature(
+                    obj,
+                    method_name
+                )
+                for method_name in ObjectRegistry._get_method_names(obj)
+            },
+            'attributes': ObjectRegistry._get_attributes(
+                obj,
+                primitives_not_custom=True
+            ),
+            'attributes_nonprimitive': ObjectRegistry._get_attributes(
+                obj,
+                primitives_not_custom=False
+            ),
+        }
+
+    @staticmethod
     def _traverse_attribute_path(obj, attribute_path):
         attributes = attribute_path.split('.')
         attribute_final = attributes.pop()
@@ -187,18 +213,7 @@ class ObjectRegistry(object):
         obj = self.get_registered_object(objid)
         if attribute_path is not None:
             obj = self._obj_attribute(obj, attribute_path)
-        return {
-            'object_str': ObjectRegistry._object_str(obj),
-            'methods': {
-                method_name: self._obj_method_signature(obj, method_name)
-                for method_name in self._get_method_names(obj)
-            },
-            'attributes': self._get_attributes(obj, primitives_not_custom=True),
-            'attributes_nonprimitive': self._get_attributes(
-                obj,
-                primitives_not_custom=False
-            ),
-        }
+        return self._obj_signature(obj)
 
     def class_init_signature(self, class_key):
         if class_key not in self._abstract_class_key_dict:
