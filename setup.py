@@ -6,7 +6,7 @@ with open(path.join(__file_dir__, "README.md"), "r", encoding="utf-8") as fh:
     long_description = fh.read()
 
 setup(name='remoteobjects',
-      version='1.7.1',
+      version='1.8.0',
       description='Remote object access under a client-server model.',
       long_description=long_description,
       long_description_content_type="text/markdown",
@@ -26,4 +26,4 @@ setup(name='remoteobjects',
           'Framework :: Flask',
       ],
       python_requires=">= 3.6"
-      )
+)

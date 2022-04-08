@@ -1,3 +1,10 @@
+def _ensure_default(code_string):
+    if ('=' not in code_string and
+        not code_string.startswith('self')
+    ):
+        return f'{code_string} = RequiredParameter()'
+    return code_string
+
 def _define_remote_constructor(
         init_signature: dict,
         server_uri: str,
@@ -18,7 +25,7 @@ def _define_remote_constructor(
     definition_loc = [
         "\tdef __init__({},".format(
             ','.join([
-                param_dict['code_string']
+                _ensure_default(param_dict['code_string'])
                 for param_dict in init_signature.values()
             ])
         ),

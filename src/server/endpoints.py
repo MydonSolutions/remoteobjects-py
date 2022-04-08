@@ -112,7 +112,7 @@ class RemoteObjectEndpoint_Registry(Resource):
         class_key = request.args.get('class_key', default=None, type=str)
         object_id = request.args.get('object_id', default=None, type=str)
         attribute_path = request.args.get(
-            'attribute_path', default="", type=str)
+            'attribute_path', default=None, type=str)
         if class_key is None and object_id is None:
             # return the abstract-object keys available for registration
             return {

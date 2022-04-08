@@ -1,6 +1,10 @@
 from .remote_object import RemoteObject
 
 
+class RequiredParameter(object):
+    pass
+
+
 class RemoteInstance(RemoteObject):
     def __init__(self,
                  server_uri,
@@ -15,21 +19,24 @@ class RemoteInstance(RemoteObject):
             server_uri,
             allowed_upload_extension_regex
         )
+        if remote_object_id is None:
+            # Register a new instance
+            for (key, value) in init_args_dict.items():
+                if isinstance(value, RequiredParameter):
+                    raise TypeError(f'{class_key}.__init__() missing a required positional argument: \'{key}\'')
 
-        params = {
-            'class_key': class_key,
-        }
-        if remote_object_id is not None:
-            params['object_id'] = remote_object_id
-
-        registration_response = self._get(
-            'remoteobjects/registry',
-            params=params,
-            data=init_args_dict
-        )
-        if registration_response.status_code != 200:
-            raise RuntimeError(registration_response.json())
-        self._remote_object_id = registration_response.json()['id']
+            registration_response = self._get(
+                'remoteobjects/registry',
+                params={
+                    'class_key': class_key,
+                },
+                data=init_args_dict
+            )
+            if registration_response.status_code != 200:
+                raise RuntimeError(registration_response.json())
+            remote_object_id = registration_response.json()['id']
+        
+        self._remote_object_id = remote_object_id
         self._del_remote = delete_remote_on_del
 
     def _manage_CRUD_request(
@@ -52,7 +59,7 @@ class RemoteInstance(RemoteObject):
 
     def __del__(self):
         self._delete_files_uploaded()
-        if self._del_remote:
+        if hasattr(self, '_del_remote') and self._del_remote:
             self._delete(
                 'remoteobjects/registry',
                 params={

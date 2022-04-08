@@ -198,6 +198,8 @@ class ObjectRegistry(object):
 
     def obj_attribute(self, objid, attribute_path):
         obj = self.get_registered_object(objid)
+        if attribute_path is None:
+            return obj
         return self._obj_attribute(obj, attribute_path)
 
     def _obj_attribute_set(self, obj, attribute_path, value):
