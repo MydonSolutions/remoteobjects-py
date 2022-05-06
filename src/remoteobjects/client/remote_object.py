@@ -2,6 +2,7 @@ import types
 from os import path
 import re
 import requests
+import sys
 
 from .rest_client import RestClient
 from ..server import __VERSION__
@@ -143,7 +144,12 @@ class RemoteObject(RestClient):
             "\t\t},",
             "\t\tdata = args,",
             "\t)",
-            "\treturn resp.json()['return']",
+            "\tresp_json = resp.json()",
+            "\tif 'stderr' in resp_json and resp_json['stderr'] is not None and len(resp_json['stderr']) > 0:",
+            "\t\tprint(resp_json['stderr'], file=sys.stderr, end='')",
+            "\tif 'stdout' in resp_json and resp_json['stdout'] is not None and len(resp_json['stdout']) > 0:",
+            "\t\tprint(resp_json['stdout'], end='')",
+            "\treturn resp_json['return']",
             "",
         ]
         return loc

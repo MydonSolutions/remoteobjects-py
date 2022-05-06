@@ -4,6 +4,8 @@ from werkzeug.utils import secure_filename
 import re
 import os.path
 from datetime import datetime
+from io import StringIO
+import sys
 
 from .object_registry import ObjectRegistry
 from .server_version import __VERSION__
@@ -194,14 +196,24 @@ class RemoteObjectEndpoint_Registry(Resource):
             type=str
         )
         try:
-            return {
+            tmp_stdout = StringIO()            
+            sys.stdout = tmp_stdout
+            tmp_stderr = StringIO()            
+            sys.stderr = tmp_stderr
+            return_val = {
                 'return': __REMOTE_OBJECT_REGISTRY__.obj_call_method(
                     object_id,
                     func_name,
                     self._arg_dict(request),
                     attribute_path=attribute_path
                 )
-            }, 200
+            }
+            sys.stdout = sys.__stdout__
+            sys.stderr = sys.__stderr__
+            return_val['stdout'] = tmp_stdout.getvalue()
+            return_val['stderr'] = tmp_stderr.getvalue()
+            
+            return return_val, 200
         except BaseException as err:
             return {
                 'error': f'{type(err)}: {err}'
