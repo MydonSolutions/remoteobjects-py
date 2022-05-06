@@ -260,4 +260,4 @@ def addRemoteObjectResources(flask_app, class_list):
                            '/remoteobjects/upload')
     flask_api.add_resource(RemoteObjectEndpoint_Version,
                            '/remoteobjects/version')
-    return flask_api
+    return flask_api, __REMOTE_OBJECT_REGISTRY__
