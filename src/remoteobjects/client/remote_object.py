@@ -149,6 +149,8 @@ class RemoteObject(RestClient):
             "\t\tprint(resp_json['stderr'], file=sys.stderr, end='')",
             "\tif 'stdout' in resp_json and resp_json['stdout'] is not None and len(resp_json['stdout']) > 0:",
             "\t\tprint(resp_json['stdout'], end='')",
+            "\tif 'logs' in resp_json and resp_json['logs'] is not None and len(resp_json['logs']) > 0:",
+            "\t\tprint(resp_json['logs'], end='')",
             "\treturn resp_json['return']",
             "",
         ]

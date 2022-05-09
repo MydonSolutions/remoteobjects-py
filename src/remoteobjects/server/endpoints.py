@@ -5,7 +5,16 @@ import re
 import os.path
 from datetime import datetime
 from io import StringIO
+import logging
 import sys
+
+def captureLoggingOutput(logger, stringIoObject):
+    logger.setLevel(logging.DEBUG)
+
+    handler = logging.StreamHandler(stringIoObject)
+    handler.setLevel(logging.DEBUG)
+    logger.addHandler(handler)
+    return handler
 
 from .object_registry import ObjectRegistry
 from .server_version import __VERSION__
@@ -198,8 +207,12 @@ class RemoteObjectEndpoint_Registry(Resource):
         try:
             tmp_stdout = StringIO()            
             sys.stdout = tmp_stdout
-            tmp_stderr = StringIO()            
+            tmp_stderr = StringIO()
             sys.stderr = tmp_stderr
+            obj = __REMOTE_OBJECT_REGISTRY__.obj_attribute(object_id, attribute_path)
+            if hasattr(obj, 'logger'):
+                tmp_logging = StringIO()
+                log_handler = captureLoggingOutput(getattr(obj, 'logger'), tmp_logging)
             return_val = {
                 'return': __REMOTE_OBJECT_REGISTRY__.obj_call_method(
                     object_id,
@@ -210,6 +223,9 @@ class RemoteObjectEndpoint_Registry(Resource):
             }
             sys.stdout = sys.__stdout__
             sys.stderr = sys.__stderr__
+            if hasattr(obj, 'logger'):
+                log_handler.close()
+                return_val['logs'] = tmp_logging.getvalue()
             return_val['stdout'] = tmp_stdout.getvalue()
             return_val['stderr'] = tmp_stderr.getvalue()
             
