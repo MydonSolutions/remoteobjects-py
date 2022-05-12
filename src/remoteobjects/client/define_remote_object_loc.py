@@ -29,6 +29,7 @@ def _define_remote_constructor(
                 for param_dict in init_signature.values()
             ])
         ),
+        f"\t\tserver_uri = '{server_uri}',",
         "\t\tremote_object_id = None,",
         f"\t\tdelete_remote_on_del = {delete_remote_on_del},",
         ("\t\tallowed_upload_extension_regex = "
@@ -54,8 +55,8 @@ def _define_remote_constructor(
 
     definition_loc += [
         "\t\tsuper().__init__(",
-        f"\t\t\t'{server_uri}',",
         f"\t\t\t'{class_key}',",
+        "\t\t\tserver_uri = server_uri,",
         "\t\t\tinit_args_dict = init_args_dict,",
         "\t\t\tremote_object_id = remote_object_id,",
         "\t\t\tdelete_remote_on_del = delete_remote_on_del,",

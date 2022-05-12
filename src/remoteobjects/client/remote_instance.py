@@ -7,8 +7,8 @@ class RequiredParameter(object):
 
 class RemoteInstance(RemoteObject):
     def __init__(self,
-                 server_uri,
                  class_key,
+                 server_uri=None,
                  init_args_dict={},
                  delete_remote_on_del=True,
                  remote_object_id=None,
