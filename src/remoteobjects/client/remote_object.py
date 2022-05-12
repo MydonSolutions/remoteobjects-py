@@ -12,12 +12,13 @@ class RemoteObject(RestClient):
     def __init__(
         self,
         server_uri,
+        remote_object_id,
         allowed_upload_extension_regex=r'.*',
     ):
         self._confirm_server_version(server_uri)
         super().__init__(server_uri)
         self._allowed_extension_regex = allowed_upload_extension_regex
-
+        self._remote_object_id = remote_object_id
         self.files_uploaded = {}
 
     @staticmethod
@@ -167,9 +168,9 @@ class RemoteObject(RestClient):
         setattr(self, func_name, types.MethodType(
             local_env_dict[func_name], self))
 
-    def _get_attribute(self, remote_root_object_id, attribute_absolute_path):
+    def _get_attribute(self, attribute_absolute_path):
         params = {
-            'object_id': remote_root_object_id,
+            'object_id': self._remote_object_id,
         }
         if attribute_absolute_path is not None:
             params['attribute_path'] = attribute_absolute_path
@@ -181,7 +182,6 @@ class RemoteObject(RestClient):
 
     def _set_attribute(
         self,
-        remote_root_object_id,
         attribute_absolute_path,
         value
     ):
@@ -191,7 +191,7 @@ class RemoteObject(RestClient):
                 f' non-primitive value {value} <{value.__class__}>.'
             )
         params = {
-            'object_id': remote_root_object_id,
+            'object_id': self._remote_object_id,
         }
         if attribute_absolute_path is not None:
             params['attribute_path'] = attribute_absolute_path
@@ -201,17 +201,15 @@ class RemoteObject(RestClient):
             data={'value': value}
         )
 
-    def _add_property(self, remote_root_object_id, attribute_absolute_path):
+    def _add_property(self, attribute_absolute_path):
         setattr(
             self.__class__,
             attribute_absolute_path.split('.')[-1],
             property(
                 fget=lambda self: self._get_attribute(
-                    remote_root_object_id,
                     attribute_absolute_path
                 ),
                 fset=lambda self, value: self._set_attribute(
-                    remote_root_object_id,
                     attribute_absolute_path,
                     value
                 ),

@@ -14,17 +14,17 @@ class RemoteAttribute(RemoteObject):
     ):
         super().__init__(
             server_uri,
+            root_object_id,
             allowed_upload_extension_regex
         )
         ancestor_obj[remote_object_str] = self
-        self._remote_root_object_id = root_object_id
         self._attribute_path = attribute_path
         self._remote_object_str = remote_object_str
 
         response = self._get(
             'remoteobjects/registry/signature',
             params={
-                'object_id': self._remote_root_object_id,
+                'object_id': self._remote_object_id,
                 'attribute_path': self._attribute_path
             }
         )
@@ -35,7 +35,7 @@ class RemoteAttribute(RemoteObject):
                     self._define_remote_function_loc(
                         name,
                         parameters,  # name:code-string dict
-                        self._remote_root_object_id,
+                        self._remote_object_id,
                         attribute_absolute_path=self._attribute_path
                     )
                 )
@@ -43,7 +43,7 @@ class RemoteAttribute(RemoteObject):
             for (name, obj_str) in response.json()['attributes'].items():
                 if hasattr(self, name): # how come???
                     input()
-                    print(f'{self._remote_root_object_id}.{self._attribute_path} has already defined attribute `{name}`...')
+                    print(f'{self._remote_object_id}.{self._attribute_path} has already defined attribute `{name}`...')
                     print('\tself:', self)
                     print('\tremote_object_str:', remote_object_str)
                     print('\tproperty:', obj_str)
@@ -52,7 +52,6 @@ class RemoteAttribute(RemoteObject):
                     input()
                 else:
                     self._add_property(
-                        self._remote_root_object_id,
                         f'{self._attribute_path}.{name}'
                     )
             for (name, obj_str) in response.json()['attributes_nonprimitive'].items():
@@ -61,7 +60,7 @@ class RemoteAttribute(RemoteObject):
                 else:
                     setattr(self, name, RemoteAttribute(
                         self._server_uri,
-                        self._remote_root_object_id,
+                        self._remote_object_id,
                         f'{self._attribute_path}.{name}',
                         obj_str,
                         ancestor_obj,

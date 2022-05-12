@@ -15,10 +15,6 @@ class RemoteInstance(RemoteObject):
                  allowed_upload_extension_regex=r'.*',
                  ):
         self._confirm_server_version(server_uri)
-        super().__init__(
-            server_uri,
-            allowed_upload_extension_regex
-        )
         if remote_object_id is None:
             # Register a new instance
             for (key, value) in init_args_dict.items():
@@ -36,7 +32,11 @@ class RemoteInstance(RemoteObject):
                 raise RuntimeError(registration_response.json())
             remote_object_id = registration_response.json()['id']
         
-        self._remote_object_id = remote_object_id
+        super().__init__(
+            server_uri,
+            remote_object_id,
+            allowed_upload_extension_regex
+        )
         self._del_remote = delete_remote_on_del
 
     def _manage_CRUD_request(

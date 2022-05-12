@@ -81,7 +81,7 @@ def _define_remote_constructor(
     if attribute_depth_allowance != 0:
         definition_loc += [
             "\t\tfor (name, _) in response.json()['attributes'].items():",
-            "\t\t\tself._add_property(self._remote_object_id, name)",
+            "\t\t\tself._add_property(name)",
             "\t\tancestor_obj = {response.json()['object_str']: self}",
             ("\t\tfor (name, obj_str) in response.json()["
                 "'attributes_nonprimitive'].items():"),
