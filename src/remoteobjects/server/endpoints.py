@@ -9,8 +9,6 @@ import logging
 import sys
 
 def captureLoggingOutput(logger, stringIoObject):
-    logger.setLevel(logging.DEBUG)
-
     handler = logging.StreamHandler(stringIoObject)
     handler.setLevel(logging.DEBUG)
     logger.addHandler(handler)
@@ -204,15 +202,23 @@ class RemoteObjectEndpoint_Registry(Resource):
             default=None,
             type=str
         )
+
         try:
-            tmp_stdout = StringIO()            
-            sys.stdout = tmp_stdout
-            tmp_stderr = StringIO()
-            sys.stderr = tmp_stderr
             obj = __REMOTE_OBJECT_REGISTRY__.obj_attribute(object_id, attribute_path)
-            if hasattr(obj, 'logger'):
-                tmp_logging = StringIO()
-                log_handler = captureLoggingOutput(getattr(obj, 'logger'), tmp_logging)
+        except BaseException as err:
+            return {
+                'error': f'{type(err)}: {err}'
+            }, 500
+        
+        tmp_stdout = StringIO()            
+        sys.stdout = tmp_stdout
+        tmp_stderr = StringIO()
+        sys.stderr = tmp_stderr
+        if hasattr(obj, 'logger'):
+            tmp_logging = StringIO()
+            log_handler = captureLoggingOutput(getattr(obj, 'logger'), tmp_logging)
+        
+        try:
             return_val = {
                 'return': __REMOTE_OBJECT_REGISTRY__.obj_call_method(
                     object_id,
@@ -221,19 +227,20 @@ class RemoteObjectEndpoint_Registry(Resource):
                     attribute_path=attribute_path
                 )
             }
-            sys.stdout = sys.__stdout__
-            sys.stderr = sys.__stderr__
-            if hasattr(obj, 'logger'):
-                log_handler.close()
-                return_val['logs'] = tmp_logging.getvalue()
-            return_val['stdout'] = tmp_stdout.getvalue()
-            return_val['stderr'] = tmp_stderr.getvalue()
-            
-            return return_val, 200
         except BaseException as err:
-            return {
+            return_val = {
                 'error': f'{type(err)}: {err}'
-            }, 500
+            }
+        
+        sys.stdout = sys.__stdout__
+        sys.stderr = sys.__stderr__
+        if hasattr(obj, 'logger'):
+            log_handler.close()
+            return_val['logs'] = tmp_logging.getvalue()
+        return_val['stdout'] = tmp_stdout.getvalue()
+        return_val['stderr'] = tmp_stderr.getvalue()
+    
+        return return_val, 200 if 'return' in return_val else 500
 
     def patch(self):
         object_id = request.args.get('old_id', type=str)

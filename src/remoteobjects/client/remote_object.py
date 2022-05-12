@@ -75,7 +75,14 @@ class RemoteObject(RestClient):
             request_func, endpoint, data, params)
 
         if fileless_response.status_code != 200:
-            raise RuntimeError(fileless_response.json())
+            resp_json = fileless_response.json()
+            if 'stderr' in resp_json:
+                print(resp_json['stderr'], file=sys.stderr, end='')
+            if 'stdout' in resp_json:
+                print(resp_json['stdout'], end='')
+            if 'logs' in resp_json:
+                print(resp_json['logs'], end='')
+            raise RuntimeError(resp_json)
         return fileless_response
 
     def __del__(self):
