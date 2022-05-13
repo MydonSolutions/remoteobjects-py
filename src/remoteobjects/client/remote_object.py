@@ -89,6 +89,9 @@ class RemoteObject(RestClient):
         self._delete_files_uploaded()
 
     def _delete_files_uploaded(self, file_keys=None):
+        if not hasattr(self, 'files_uploaded'):
+            return 
+
         if file_keys is None:
             file_keys = list(self.files_uploaded.keys())
 
