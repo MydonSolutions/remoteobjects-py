@@ -78,7 +78,7 @@ class RemoteObject(RestClient):
             resp_json = fileless_response.json()
             if 'logs' in resp_json:
                 print(resp_json['logs'], end='')
-            raise RuntimeError(resp_json)
+            raise RuntimeError(resp_json['error'])
         return fileless_response
 
     def __del__(self):
