@@ -1,6 +1,7 @@
 import types
 import inspect
 import re
+import threading
 
 __PRIMITIVE_CLASSES__ = [
     str,
@@ -13,10 +14,16 @@ __PRIMITIVE_CLASSES__ = [
 
 
 class ObjectRegistry(object):
-    def __init__(self, registration_class_objects):
+    def __init__(self, registration_class_objects, registration_semaphore_dict=None):
         '''
         :registration_class_objects list: {object_type} i.e.
             [cosmic_fengine.CosmicFengine,...]
+        
+        :registration_semaphore_dict dict|None: 
+            Registrations, and ID changes, of objects are
+            reflected in the provided dictionary. However, the ObjectRegistry will
+            not acquire/release the semapohores. The internal dict should be used
+            by upstream code as it sees fit.
         '''
         self._abstract_class_key_dict = {
             abs_obj.__name__: abs_obj
@@ -26,6 +33,7 @@ class ObjectRegistry(object):
             key: 0 for key in self._abstract_class_key_dict.keys()
         }
         self._registered_obj_dict = {}
+        self._registered_sem_dict = registration_semaphore_dict
 
     @staticmethod
     def class_is_primitive(class_obj):
@@ -254,6 +262,8 @@ class ObjectRegistry(object):
                 args_dict
             )
             self._class_dict[class_key] += 1
+            if self._registered_sem_dict is not None:
+                self._registered_sem_dict[objid] = threading.Semaphore()
         except NotImplementedError as err:
             raise err
         except RuntimeError as err:
@@ -273,6 +283,8 @@ class ObjectRegistry(object):
             )
             )
         self._registered_obj_dict[newid] = self._registered_obj_dict.pop(objid)
+        if self._registered_sem_dict is not None:
+            self._registered_sem_dict[newid] = self._registered_sem_dict.pop(objid)
         return newid
 
     def deregister_object(self, objid):
@@ -281,3 +293,5 @@ class ObjectRegistry(object):
                 objid)
             )
         self._registered_obj_dict.pop(objid)
+        if self._registered_sem_dict is not None:
+            self._registered_sem_dict.pop(objid)

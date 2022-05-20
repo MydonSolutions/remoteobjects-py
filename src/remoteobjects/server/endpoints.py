@@ -7,6 +7,7 @@ from datetime import datetime
 from io import StringIO
 import logging
 import sys
+import threading
 
 def captureLoggingOutput(logger, stringIoObject):
     handler = logging.StreamHandler(stringIoObject)
@@ -18,6 +19,7 @@ from .object_registry import ObjectRegistry
 from .server_version import __VERSION__
 
 __REMOTE_OBJECT_REGISTRY__ = None
+__REMOTE_OBJECT_SEMAPHORES__ = {}
 
 __UPLOAD_DIRECTORY__ = '/tmp'
 __ALLOWED_EXTENSION_REGEX__ = r'.*'
@@ -110,6 +112,17 @@ class RemoteObjectEndpoint_Signature(Resource):
                 return {
                     'error': f'{type(err)}: {str(err)}'
                 }, 500
+        else:
+            # return the object_ids of registered objects
+            try:
+                return {
+                    'object_ids': __REMOTE_OBJECT_REGISTRY__._registered_obj_dict.keys()
+                }, 200
+            except BaseException as err:
+                return {
+                    'error': f'{type(err)}: {str(err)}'
+                }, 500
+
 
 
 class RemoteObjectEndpoint_Registry(Resource):
@@ -132,34 +145,44 @@ class RemoteObjectEndpoint_Registry(Resource):
         elif class_key is not None:
             # register a new object by key, returning its ID
             try:
-                return {
-                    'id': __REMOTE_OBJECT_REGISTRY__.register_new_object(
-                        class_key,
-                        self._arg_dict(request)
-                    )
-                }, 200
+                object_id = __REMOTE_OBJECT_REGISTRY__.register_new_object(
+                    class_key,
+                    self._arg_dict(request)
+                )
+
+                return {'id': object_id}, 200
             except BaseException as err:
                 return {
                     'error': f'{type(err)}: {str(err)}'
                 }, 500
         elif object_id is not None:
             # return the value of the object's attribute
+            __REMOTE_OBJECT_SEMAPHORES__[object_id].acquire()
             try:
                 value = __REMOTE_OBJECT_REGISTRY__.obj_attribute(
                     object_id,
                     attribute_path
                 )
                 if ObjectRegistry.class_is_primitive(value.__class__):
-                    return {
-                        'value': value
-                    }, 200
+                    return_pair = (
+                        {
+                            'value': value
+                        },
+                        200
+                    )
                 else:
-                    return ObjectRegistry._obj_signature(value), 200
-
+                    return_pair = (ObjectRegistry._obj_signature(value), 200)
             except BaseException as err:
-                return {
-                    'error': f'{type(err)}: {str(err)}'
-                }, 500
+                return_pair = (
+                    {
+                        'error': f'{type(err)}: {str(err)}'
+                    },
+                    500
+                )
+            __REMOTE_OBJECT_SEMAPHORES__[object_id].release()
+            return return_pair[0], return_pair[1]
+            
+
         return {
             'errror': 'Unsupported parameter combination.',
             'class_key': class_key,
@@ -175,18 +198,24 @@ class RemoteObjectEndpoint_Registry(Resource):
             type=str
         )
         if object_id is not None and attribute_path is not None:
-            # return the value of the object's attribute
+            # set the value of the object's attribute
+            __REMOTE_OBJECT_SEMAPHORES__[object_id].acquire()
             try:
                 __REMOTE_OBJECT_REGISTRY__.obj_attribute_set(
                     object_id,
                     attribute_path,
                     request.json['value']
                 )
-                return {}, 200
+                return_pair = ({}, 200)
             except BaseException as err:
-                return {
-                    'error': f'{type(err)}: {str(err)}'
-                }, 500
+                return_pair = (
+                    {
+                        'error': f'{type(err)}: {str(err)}'
+                    },
+                    500
+                )
+            __REMOTE_OBJECT_SEMAPHORES__[object_id].release()
+            return return_pair[0], return_pair[1]
         return {
             'errror': ('Unsupported parameter combination. Both `object_id` '
                        'and `attribute_path` must be supplied.'),
@@ -203,6 +232,7 @@ class RemoteObjectEndpoint_Registry(Resource):
             type=str
         )
 
+        __REMOTE_OBJECT_SEMAPHORES__[object_id].acquire()
         try:
             obj = __REMOTE_OBJECT_REGISTRY__.obj_attribute(object_id, attribute_path)
         except BaseException as err:
@@ -219,50 +249,74 @@ class RemoteObjectEndpoint_Registry(Resource):
             log_handler = captureLoggingOutput(getattr(obj, 'logger'), tmp_logging)
         
         try:
-            return_val = {
-                'return': __REMOTE_OBJECT_REGISTRY__.obj_call_method(
-                    object_id,
-                    func_name,
-                    self._arg_dict(request),
-                    attribute_path=attribute_path
-                )
-            }
+            return_pair = (
+                {
+                    'return': __REMOTE_OBJECT_REGISTRY__.obj_call_method(
+                        object_id,
+                        func_name,
+                        self._arg_dict(request),
+                        attribute_path=attribute_path
+                    )
+                },
+                200
+            )
         except BaseException as err:
-            return_val = {
-                'error': f'{type(err)}: {err}'
-            }
+            return_pair = (
+                {
+                    'error': f'{type(err)}: {err}'
+                },
+                500
+            )
         
         sys.stdout = sys.__stdout__
         sys.stderr = sys.__stderr__
         if hasattr(obj, 'logger'):
             log_handler.close()
-            return_val['logs'] = tmp_logging.getvalue()
-        return_val['stdout'] = tmp_stdout.getvalue()
-        return_val['stderr'] = tmp_stderr.getvalue()
+            return_pair[0]['logs'] = tmp_logging.getvalue()
+        return_pair[0]['stdout'] = tmp_stdout.getvalue()
+        return_pair[0]['stderr'] = tmp_stderr.getvalue()
     
-        return return_val, 200 if 'return' in return_val else 500
+        __REMOTE_OBJECT_SEMAPHORES__[object_id].release()
+        return return_pair[0], return_pair[1]
 
     def patch(self):
         object_id = request.args.get('old_id', type=str)
         new_id = request.args.get('new_id', type=str)
+        __REMOTE_OBJECT_SEMAPHORES__[object_id].acquire()
         try:
-            return {
-                'id': __REMOTE_OBJECT_REGISTRY__.obj_set_id(object_id, new_id)
-            }, 200
+            new_id = __REMOTE_OBJECT_REGISTRY__.obj_set_id(object_id, new_id)
+            return_pair = (
+                {
+                    'id': new_id
+                },
+                200
+            )
+
+            __REMOTE_OBJECT_SEMAPHORES__[new_id] = __REMOTE_OBJECT_SEMAPHORES__.pop(object_id)
+            object_id = new_id
         except BaseException as err:
-            return {
-                'error': f'{type(err)}: {err}'
-            }, 500
+            return_pair = (
+                    {
+                    'error': f'{type(err)}: {err}'
+                },
+                500
+            )
+        __REMOTE_OBJECT_SEMAPHORES__[object_id].release()
+        return return_pair[0], return_pair[1]
 
     def delete(self):
         object_id = request.args.get('object_id', type=str)
         try:
             __REMOTE_OBJECT_REGISTRY__.deregister_object(object_id)
-            return {}, 200
+            return_pair = ({}, 200)
         except BaseException as err:
-            return {
-                'error': f'{type(err)}: {err}'
-            }, 500
+            return_pair = (
+                {
+                    'error': f'{type(err)}: {err}'
+                },
+                500
+            )
+        return return_pair[0], return_pair[1]
 
 
 class RemoteObjectEndpoint_Version(Resource):
@@ -284,7 +338,7 @@ def addRemoteObjectResources(flask_app, class_list):
             'ALLOWED_EXTENSION_REGEX'
         ]
 
-    __REMOTE_OBJECT_REGISTRY__ = ObjectRegistry(class_list)
+    __REMOTE_OBJECT_REGISTRY__ = ObjectRegistry(class_list, __REMOTE_OBJECT_SEMAPHORES__)
 
     flask_api = Api(flask_app)
     flask_api.add_resource(RemoteObjectEndpoint_Signature,
