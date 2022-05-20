@@ -76,10 +76,6 @@ class RemoteObject(RestClient):
 
         if fileless_response.status_code != 200:
             resp_json = fileless_response.json()
-            if 'stderr' in resp_json:
-                print(resp_json['stderr'], file=sys.stderr, end='')
-            if 'stdout' in resp_json:
-                print(resp_json['stdout'], end='')
             if 'logs' in resp_json:
                 print(resp_json['logs'], end='')
             raise RuntimeError(resp_json)
@@ -156,10 +152,6 @@ class RemoteObject(RestClient):
             "\t\tdata = args,",
             "\t)",
             "\tresp_json = resp.json()",
-            "\tif 'stderr' in resp_json and resp_json['stderr'] is not None and len(resp_json['stderr']) > 0:",
-            "\t\tprint(resp_json['stderr'], file=sys.stderr, end='')",
-            "\tif 'stdout' in resp_json and resp_json['stdout'] is not None and len(resp_json['stdout']) > 0:",
-            "\t\tprint(resp_json['stdout'], end='')",
             "\tif 'logs' in resp_json and resp_json['logs'] is not None and len(resp_json['logs']) > 0:",
             "\t\tprint(resp_json['logs'], end='')",
             "\treturn resp_json['return']",

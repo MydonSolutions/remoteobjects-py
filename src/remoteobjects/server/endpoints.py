@@ -239,11 +239,7 @@ class RemoteObjectEndpoint_Registry(Resource):
             return {
                 'error': f'{type(err)}: {err}'
             }, 500
-        
-        tmp_stdout = StringIO()            
-        sys.stdout = tmp_stdout
-        tmp_stderr = StringIO()
-        sys.stderr = tmp_stderr
+
         if hasattr(obj, 'logger'):
             tmp_logging = StringIO()
             log_handler = captureLoggingOutput(getattr(obj, 'logger'), tmp_logging)
@@ -267,14 +263,10 @@ class RemoteObjectEndpoint_Registry(Resource):
                 },
                 500
             )
-        
-        sys.stdout = sys.__stdout__
-        sys.stderr = sys.__stderr__
+
         if hasattr(obj, 'logger'):
             log_handler.close()
             return_pair[0]['logs'] = tmp_logging.getvalue()
-        return_pair[0]['stdout'] = tmp_stdout.getvalue()
-        return_pair[0]['stderr'] = tmp_stderr.getvalue()
     
         __REMOTE_OBJECT_SEMAPHORES__[object_id].release()
         return return_pair[0], return_pair[1]
