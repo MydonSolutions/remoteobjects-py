@@ -41,15 +41,15 @@ class RemoteAttribute(RemoteObject):
                 )
         if attribute_depth_allowance != 0:
             for (name, obj_str) in response.json()['attributes'].items():
-                if hasattr(self, name): # how come???
-                    input()
-                    print(f'{self._remote_object_id}.{self._attribute_path} has already defined attribute `{name}`...')
-                    print('\tself:', self)
-                    print('\tremote_object_str:', remote_object_str)
-                    print('\tproperty:', obj_str)
-                    print('\tattribute:', getattr(self, name).__class__)
-                    # print('nonprimitive:', response.json()["attributes_nonprimitive"][name])
-                    input()
+                if hasattr(self, name): #TODO how come???
+                    pass
+                    # print(f'{self._remote_object_id}.{self._attribute_path} has already defined attribute `{name}`...')
+                    # print('\tself:', dir(self))
+                    # print('\tremote_object_str:', remote_object_str)
+                    # print('\tproperty:', obj_str)
+                    # print('\tattribute:', getattr(self, name).__class__)
+                    # # print('nonprimitive:', response.json()["attributes_nonprimitive"][name])
+                    # input('hit enter to continue...')
                 else:
                     self._add_property(
                         f'{self._attribute_path}.{name}'
