@@ -74,7 +74,7 @@ class RemoteObjectEndpoint_Upload(Resource):
         except BaseException as err:
             return {
                 'files_removed': deleted_files_dict,
-                'error': str(err)
+                'error': repr(err)
             }, 500
         return {
             'files_removed': deleted_files_dict
@@ -98,7 +98,7 @@ class RemoteObjectEndpoint_Signature(Resource):
                 }, 200
             except BaseException as err:
                 return {
-                    'error': f'{type(err)}: {str(err)}'
+                    'error': f'{type(err)}: {repr(err)}'
                 }, 500
         elif object_id is not None:
             # return the {method_name: method_signature...} of the registered
@@ -110,7 +110,7 @@ class RemoteObjectEndpoint_Signature(Resource):
                 ), 200
             except BaseException as err:
                 return {
-                    'error': f'{type(err)}: {str(err)}'
+                    'error': f'{type(err)}: {repr(err)}'
                 }, 500
         else:
             # return the object_ids of registered objects
@@ -120,7 +120,7 @@ class RemoteObjectEndpoint_Signature(Resource):
                 }, 200
             except BaseException as err:
                 return {
-                    'error': f'{type(err)}: {str(err)}'
+                    'error': f'{type(err)}: {repr(err)}'
                 }, 500
 
 
@@ -153,7 +153,7 @@ class RemoteObjectEndpoint_Registry(Resource):
                 return {'id': object_id}, 200
             except BaseException as err:
                 return {
-                    'error': f'{type(err)}: {str(err)}'
+                    'error': f'{type(err)}: {repr(err)}'
                 }, 500
         elif object_id is not None:
             # return the value of the object's attribute
@@ -175,7 +175,7 @@ class RemoteObjectEndpoint_Registry(Resource):
             except BaseException as err:
                 return_pair = (
                     {
-                        'error': f'{type(err)}: {str(err)}'
+                        'error': f'{type(err)}: {repr(err)}'
                     },
                     500
                 )
@@ -210,7 +210,7 @@ class RemoteObjectEndpoint_Registry(Resource):
             except BaseException as err:
                 return_pair = (
                     {
-                        'error': f'{type(err)}: {str(err)}'
+                        'error': f'{type(err)}: {repr(err)}'
                     },
                     500
                 )
@@ -237,7 +237,7 @@ class RemoteObjectEndpoint_Registry(Resource):
             obj = __REMOTE_OBJECT_REGISTRY__.obj_attribute(object_id, attribute_path)
         except BaseException as err:
             return {
-                'error': f'{type(err)}: {err}'
+                'error': f'{type(err)}: {repr(err)}'
             }, 500
 
         if hasattr(obj, 'logger'):
@@ -259,7 +259,7 @@ class RemoteObjectEndpoint_Registry(Resource):
         except BaseException as err:
             return_pair = (
                 {
-                    'error': f'{type(err)}: {err}'
+                    'error': f'{type(err)}: {repr(err)}'
                 },
                 500
             )
@@ -288,8 +288,8 @@ class RemoteObjectEndpoint_Registry(Resource):
             object_id = new_id
         except BaseException as err:
             return_pair = (
-                    {
-                    'error': f'{type(err)}: {err}'
+                {
+                    'error': f'{type(err)}: {repr(err)}'
                 },
                 500
             )
@@ -304,7 +304,7 @@ class RemoteObjectEndpoint_Registry(Resource):
         except BaseException as err:
             return_pair = (
                 {
-                    'error': f'{type(err)}: {err}'
+                    'error': f'{type(err)}: {repr(err)}'
                 },
                 500
             )
