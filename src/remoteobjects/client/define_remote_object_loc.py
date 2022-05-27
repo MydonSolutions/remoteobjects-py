@@ -1,39 +1,43 @@
 def _ensure_default(code_string):
-    if ('=' not in code_string and
-        not code_string.startswith('self')
-    ):
-        return f'{code_string} = RequiredParameter()'
+    if "=" not in code_string and not code_string.startswith("self"):
+        return f"{code_string} = RequiredParameter()"
     return code_string
 
+
 def _define_remote_constructor(
-        init_signature: dict,
-        server_uri: str,
-        class_key: str,
-        delete_remote_on_del: bool,
-        allowed_upload_extension_regex: str,
-        attribute_depth_allowance: int = 0
+    init_signature: dict,
+    server_uri: str,
+    class_key: str,
+    delete_remote_on_del: bool,
+    allowed_upload_extension_regex: str,
+    attribute_depth_allowance: int = 0,
 ):
     kwargs_param_present = False
     if len(init_signature) > 0:
         last_param_key = list(init_signature)[-1]
-        kwargs_param_present = init_signature[last_param_key][
-            'code_string'].startswith('**')
+        kwargs_param_present = init_signature[last_param_key]["code_string"].startswith(
+            "**"
+        )
 
     if kwargs_param_present:
         init_signature.pop(last_param_key)
 
     definition_loc = [
         "\tdef __init__({},".format(
-            ','.join([
-                _ensure_default(param_dict['code_string'])
-                for param_dict in init_signature.values()
-            ])
+            ",".join(
+                [
+                    _ensure_default(param_dict["code_string"])
+                    for param_dict in init_signature.values()
+                ]
+            )
         ),
         f"\t\tserver_uri = '{server_uri}',",
         "\t\tremote_object_id = None,",
         f"\t\tdelete_remote_on_del = {delete_remote_on_del},",
-        ("\t\tallowed_upload_extension_regex = "
-            f"r'{allowed_upload_extension_regex}',"),
+        (
+            "\t\tallowed_upload_extension_regex = "
+            f"r'{allowed_upload_extension_regex}',"
+        ),
     ]
 
     if kwargs_param_present:
@@ -45,7 +49,7 @@ def _define_remote_constructor(
         *[
             f"\t\t\t'{arg_name}': {arg_name},"
             for arg_name in init_signature.keys()
-            if arg_name != 'self'
+            if arg_name != "self"
         ],
         "\t\t}",
     ]
@@ -60,8 +64,7 @@ def _define_remote_constructor(
         "\t\t\tinit_args_dict = init_args_dict,",
         "\t\t\tremote_object_id = remote_object_id,",
         "\t\t\tdelete_remote_on_del = delete_remote_on_del,",
-        ("\t\t\tallowed_upload_extension_regex = "
-         "allowed_upload_extension_regex,"),
+        ("\t\t\tallowed_upload_extension_regex = " "allowed_upload_extension_regex,"),
         "\t\t)",
         "\t\tresponse = self._get(",
         "\t\t\t'remoteobjects/registry/signature',",
@@ -84,8 +87,10 @@ def _define_remote_constructor(
             "\t\tfor (name, _) in response.json()['attributes'].items():",
             "\t\t\tself._add_property(name)",
             "\t\tancestor_obj = {response.json()['object_str']: self}",
-            ("\t\tfor (name, obj_str) in response.json()["
-                "'attributes_nonprimitive'].items():"),
+            (
+                "\t\tfor (name, obj_str) in response.json()["
+                "'attributes_nonprimitive'].items():"
+            ),
             "\t\t\tsetattr(self, name, RemoteAttribute(",
             "\t\t\t\tself._server_uri,",
             "\t\t\t\tself._remote_object_id,",

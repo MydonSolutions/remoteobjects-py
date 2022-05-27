@@ -9,39 +9,35 @@ class RemoteAttribute(RemoteObject):
         attribute_path: str,
         remote_object_str: str,
         ancestor_obj: dict,
-        allowed_upload_extension_regex=r'.*',
-        attribute_depth_allowance: int = 0
+        allowed_upload_extension_regex=r".*",
+        attribute_depth_allowance: int = 0,
     ):
-        super().__init__(
-            server_uri,
-            root_object_id,
-            allowed_upload_extension_regex
-        )
+        super().__init__(server_uri, root_object_id, allowed_upload_extension_regex)
         ancestor_obj[remote_object_str] = self
         self._attribute_path = attribute_path
         self._remote_object_str = remote_object_str
 
         response = self._get(
-            'remoteobjects/registry/signature',
+            "remoteobjects/registry/signature",
             params={
-                'object_id': self._remote_object_id,
-                'attribute_path': self._attribute_path
-            }
+                "object_id": self._remote_object_id,
+                "attribute_path": self._attribute_path,
+            },
         )
-        for (name, parameters) in response.json()['methods'].items():
-            if name != '__init__':
+        for (name, parameters) in response.json()["methods"].items():
+            if name != "__init__":
                 self._add_method_loc(
                     name,
                     self._define_remote_function_loc(
                         name,
                         parameters,  # name:code-string dict
                         self._remote_object_id,
-                        attribute_absolute_path=self._attribute_path
-                    )
+                        attribute_absolute_path=self._attribute_path,
+                    ),
                 )
         if attribute_depth_allowance != 0:
-            for (name, obj_str) in response.json()['attributes'].items():
-                if hasattr(self, name): #TODO how come???
+            for (name, obj_str) in response.json()["attributes"].items():
+                if hasattr(self, name):  # TODO how come???
                     pass
                     # print(f'{self._remote_object_id}.{self._attribute_path} has already defined attribute `{name}`...')
                     # print('\tself:', dir(self))
@@ -51,19 +47,21 @@ class RemoteAttribute(RemoteObject):
                     # # print('nonprimitive:', response.json()["attributes_nonprimitive"][name])
                     # input('hit enter to continue...')
                 else:
-                    self._add_property(
-                        f'{self._attribute_path}.{name}'
-                    )
-            for (name, obj_str) in response.json()['attributes_nonprimitive'].items():
+                    self._add_property(f"{self._attribute_path}.{name}")
+            for (name, obj_str) in response.json()["attributes_nonprimitive"].items():
                 if obj_str in ancestor_obj:
                     setattr(self, name, ancestor_obj[obj_str])
                 else:
-                    setattr(self, name, RemoteAttribute(
-                        self._server_uri,
-                        self._remote_object_id,
-                        f'{self._attribute_path}.{name}',
-                        obj_str,
-                        ancestor_obj,
-                        allowed_upload_extension_regex,
-                        attribute_depth_allowance-1
-                    ))
+                    setattr(
+                        self,
+                        name,
+                        RemoteAttribute(
+                            self._server_uri,
+                            self._remote_object_id,
+                            f"{self._attribute_path}.{name}",
+                            obj_str,
+                            ancestor_obj,
+                            allowed_upload_extension_regex,
+                            attribute_depth_allowance - 1,
+                        ),
+                    )
