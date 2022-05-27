@@ -21,7 +21,8 @@ class TestRemoteObject(unittest.TestCase):
         defineRemoteClass(
             'Dummy',
             'http://localhost:6000',
-            globals()
+            globals(),
+            attribute_depth_allowance=-1
         )
 
     def test_initialisation_kwargs(self):
