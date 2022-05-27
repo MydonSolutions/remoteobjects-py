@@ -72,7 +72,7 @@ class RemoteInstance(RemoteObject):
         response = self._patch(
             'remoteobjects/registry',
             params={
-                'old_id': self._remote_object_id,
+                'object_id': self._remote_object_id,
                 'new_id': new_id,
             }
         )

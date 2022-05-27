@@ -272,7 +272,7 @@ class RemoteObjectEndpoint_Registry(Resource):
         return return_pair[0], return_pair[1]
 
     def patch(self):
-        object_id = request.args.get('old_id', type=str)
+        object_id = request.args.get('object_id', type=str)
         new_id = request.args.get('new_id', type=str)
         __REMOTE_OBJECT_SEMAPHORES__[object_id].acquire()
         try:
