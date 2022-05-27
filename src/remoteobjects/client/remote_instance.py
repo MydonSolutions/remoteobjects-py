@@ -1,4 +1,5 @@
 from .remote_object import RemoteObject
+from .rest_client import RestClient
 
 
 class RequiredParameter(object):
@@ -14,14 +15,14 @@ class RemoteInstance(RemoteObject):
                  remote_object_id=None,
                  allowed_upload_extension_regex=r'.*',
                  ):
-        self._confirm_server_version(server_uri)
         if remote_object_id is None:
             # Register a new instance
             for (key, value) in init_args_dict.items():
                 if isinstance(value, RequiredParameter):
                     raise TypeError(f'{class_key}.__init__() missing a required positional argument: \'{key}\'')
 
-            registration_response = self._get(
+            client = RestClient(server_uri)
+            registration_response = client._get(
                 'remoteobjects/registry',
                 params={
                     'class_key': class_key,
