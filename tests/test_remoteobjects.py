@@ -56,18 +56,17 @@ class TestRemoteObject(unittest.TestCase):
     def test_id_control(self):
         remoteDummy = DummyRemote(
             dumbness="Resilient",
-            remote_object_id="PersistentDummy",
             delete_remote_on_del=False,
         )
+        remoteDummy._set_id("PersistentDummy")
         remoteDummy.__del__()
 
         client = RestClient("http://localhost:6000")
         response = client._get(
             "remoteobjects/registry",
-            params={"class_key": "Dummy", "object_id": "PersistentDummy"},
+            params={"object_id": "PersistentDummy"},
         )
         self.assertEqual(response.status_code, 200)
-        self.assertFalse(response.json()["new_object"])
 
         response = client._delete(
             "remoteobjects/registry", params={"object_id": "PersistentDummy"}

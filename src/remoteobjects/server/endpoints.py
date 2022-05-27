@@ -230,10 +230,6 @@ class RemoteObjectEndpoint_Registry(Resource):
         try:
             new_id = __REMOTE_OBJECT_REGISTRY__.obj_set_id(object_id, new_id)
             return_pair = ({"id": new_id}, 200)
-
-            __REMOTE_OBJECT_SEMAPHORES__[new_id] = __REMOTE_OBJECT_SEMAPHORES__.pop(
-                object_id
-            )
             object_id = new_id
         except BaseException as err:
             return_pair = ({"error": f"{type(err)}: {repr(err)}"}, 500)
