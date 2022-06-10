@@ -207,3 +207,28 @@ class RemoteObject(RestClient):
                 doc=None,
             ),
         )
+
+    def _get_remote_attribute(self, attribute_name):
+        remote_attribute = getattr(self, '_'+attribute_name)
+        if not remote_attribute._initialised:
+            remote_attribute._init_from_remote_signature()
+        return remote_attribute
+
+    def _add_remote_property(self, remote_attribute_name, remote_attribute):
+        setattr(
+            self,
+            '_'+remote_attribute_name,
+            remote_attribute
+        )
+        setattr(
+            self.__class__,
+            remote_attribute_name,
+            property(
+                fget=lambda self: self._get_remote_attribute(
+                    remote_attribute_name,
+                ),
+                fset=None,
+                fdel=None,
+                doc=None,
+            )
+        )

@@ -87,11 +87,9 @@ def _define_remote_constructor(
             "\t\tfor (name, _) in response.json()['attributes'].items():",
             "\t\t\tself._add_property(name)",
             "\t\tancestor_obj = {response.json()['object_str']: self}",
-            (
-                "\t\tfor (name, obj_str) in response.json()["
-                "'attributes_nonprimitive'].items():"
-            ),
-            "\t\t\tsetattr(self, name, RemoteAttribute(",
+            ("\t\tfor (name, obj_str) in response.json()["
+                "'attributes_nonprimitive'].items():"),
+            "\t\t\tremote_attribute = RemoteAttribute(",
             "\t\t\t\tself._server_uri,",
             "\t\t\t\tself._remote_object_id,",
             "\t\t\t\tname,",
@@ -99,7 +97,8 @@ def _define_remote_constructor(
             "\t\t\t\tancestor_obj,",
             "\t\t\t\tallowed_upload_extension_regex,",
             f"\t\t\t\t{attribute_depth_allowance-1}",
-            "\t\t\t))",
+            "\t\t\t)",
+            "\t\t\tself._add_remote_property(name, remote_attribute)",
             "",
         ]
     return definition_loc

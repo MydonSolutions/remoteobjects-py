@@ -13,10 +13,15 @@ class RemoteAttribute(RemoteObject):
         attribute_depth_allowance: int = 0,
     ):
         super().__init__(server_uri, root_object_id, allowed_upload_extension_regex)
-        ancestor_obj[remote_object_str] = self
+        self._ancestor_obj = ancestor_obj
+        self._remote_root_object_id = root_object_id
         self._attribute_path = attribute_path
         self._remote_object_str = remote_object_str
+        self._attribute_depth_allowance = attribute_depth_allowance
+        self._ancestor_obj[remote_object_str] = self
+        self._initialised = False
 
+    def _init_from_remote_signature(self):
         response = self._get(
             "remoteobjects/registry/signature",
             params={
@@ -35,7 +40,7 @@ class RemoteAttribute(RemoteObject):
                         attribute_absolute_path=self._attribute_path,
                     ),
                 )
-        if attribute_depth_allowance != 0:
+        if self._attribute_depth_allowance != 0:
             for (name, obj_str) in response.json()["attributes"].items():
                 if hasattr(self, name):  # TODO how come???
                     pass
@@ -49,8 +54,8 @@ class RemoteAttribute(RemoteObject):
                 else:
                     self._add_property(f"{self._attribute_path}.{name}")
             for (name, obj_str) in response.json()["attributes_nonprimitive"].items():
-                if obj_str in ancestor_obj:
-                    setattr(self, name, ancestor_obj[obj_str])
+                if obj_str in self._ancestor_obj:
+                    setattr(self, name, self._ancestor_obj[obj_str])
                 else:
                     setattr(
                         self,
@@ -60,8 +65,8 @@ class RemoteAttribute(RemoteObject):
                             self._remote_object_id,
                             f"{self._attribute_path}.{name}",
                             obj_str,
-                            ancestor_obj,
-                            allowed_upload_extension_regex,
-                            attribute_depth_allowance - 1,
+                            self._ancestor_obj,
+                            self._allowed_extension_regex,
+                            self._attribute_depth_allowance - 1,
                         ),
                     )
