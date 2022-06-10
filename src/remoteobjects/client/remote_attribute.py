@@ -14,7 +14,6 @@ class RemoteAttribute(RemoteObject):
     ):
         super().__init__(server_uri, root_object_id, allowed_upload_extension_regex)
         self._ancestor_obj = ancestor_obj
-        self._remote_root_object_id = root_object_id
         self._attribute_path = attribute_path
         self._remote_object_str = remote_object_str
         self._attribute_depth_allowance = attribute_depth_allowance
@@ -57,10 +56,7 @@ class RemoteAttribute(RemoteObject):
                 if obj_str in self._ancestor_obj:
                     setattr(self, name, self._ancestor_obj[obj_str])
                 else:
-                    setattr(
-                        self,
-                        name,
-                        RemoteAttribute(
+                    remote_attribute = RemoteAttribute(
                             self._server_uri,
                             self._remote_object_id,
                             f"{self._attribute_path}.{name}",
@@ -68,5 +64,10 @@ class RemoteAttribute(RemoteObject):
                             self._ancestor_obj,
                             self._allowed_extension_regex,
                             self._attribute_depth_allowance - 1,
-                        ),
+                        )
+                    remote_attribute._init_from_remote_signature() # TODO rather do this lazily too
+                    setattr(
+                        self,
+                        name,
+                        remote_attribute,
                     )
