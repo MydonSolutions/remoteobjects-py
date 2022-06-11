@@ -41,33 +41,21 @@ class RemoteAttribute(RemoteObject):
                 )
         if self._attribute_depth_allowance != 0:
             for (name, obj_str) in response.json()["attributes"].items():
-                if hasattr(self, name):  # TODO how come???
-                    pass
-                    # print(f'{self._remote_object_id}.{self._attribute_path} has already defined attribute `{name}`...')
-                    # print('\tself:', dir(self))
-                    # print('\tremote_object_str:', remote_object_str)
-                    # print('\tproperty:', obj_str)
-                    # print('\tattribute:', getattr(self, name).__class__)
-                    # # print('nonprimitive:', response.json()["attributes_nonprimitive"][name])
-                    # input('hit enter to continue...')
-                else:
+                # the class might already have the property defined
+                if not hasattr(self, name):
                     self._add_property(f"{self._attribute_path}.{name}")
+
             for (name, obj_str) in response.json()["attributes_nonprimitive"].items():
                 if obj_str in self._ancestor_obj:
-                    setattr(self, name, self._ancestor_obj[obj_str])
+                    self._add_remote_property(name, self._ancestor_obj[obj_str])
                 else:
                     remote_attribute = RemoteAttribute(
-                            self._server_uri,
-                            self._remote_object_id,
-                            f"{self._attribute_path}.{name}",
-                            obj_str,
-                            self._ancestor_obj,
-                            self._allowed_extension_regex,
-                            self._attribute_depth_allowance - 1,
-                        )
-                    remote_attribute._init_from_remote_signature() # TODO rather do this lazily too
-                    setattr(
-                        self,
-                        name,
-                        remote_attribute,
+                        self._server_uri,
+                        self._remote_object_id,
+                        f"{self._attribute_path}.{name}",
+                        obj_str,
+                        self._ancestor_obj,
+                        self._allowed_extension_regex,
+                        self._attribute_depth_allowance - 1,
                     )
+                    self._add_remote_property(name, remote_attribute)

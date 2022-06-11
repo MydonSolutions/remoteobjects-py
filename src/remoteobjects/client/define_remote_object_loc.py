@@ -87,8 +87,10 @@ def _define_remote_constructor(
             "\t\tfor (name, _) in response.json()['attributes'].items():",
             "\t\t\tself._add_property(name)",
             "\t\tancestor_obj = {response.json()['object_str']: self}",
-            ("\t\tfor (name, obj_str) in response.json()["
-                "'attributes_nonprimitive'].items():"),
+            (
+                "\t\tfor (name, obj_str) in response.json()["
+                "'attributes_nonprimitive'].items():"
+            ),
             "\t\t\tremote_attribute = RemoteAttribute(",
             "\t\t\t\tself._server_uri,",
             "\t\t\t\tself._remote_object_id,",
