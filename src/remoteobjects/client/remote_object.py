@@ -77,7 +77,7 @@ class RemoteObject(RestClient):
         )
 
         if fileless_response.status_code != 200:
-            resp_json = json(fileless_response, cls=self.jsonDecoder)
+            resp_json = json.loads(fileless_response, cls=self.jsonDecoder)
             if "logs" in resp_json:
                 print(resp_json["logs"], end="")
             raise RuntimeError(resp_json["error"])
