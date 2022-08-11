@@ -1,4 +1,5 @@
 from .remote_object import RemoteObject
+import json
 
 
 class RemoteAttribute(RemoteObject):
@@ -11,8 +12,16 @@ class RemoteAttribute(RemoteObject):
         ancestor_obj: dict,
         allowed_upload_extension_regex=r".*",
         attribute_depth_allowance: int = 0,
+        jsonEncoder=json.JSONEncoder,
+        jsonDecoder=json.JSONDecoder
     ):
-        super().__init__(server_uri, root_object_id, allowed_upload_extension_regex)
+        super().__init__(
+            server_uri,
+            root_object_id,
+            allowed_upload_extension_regex,
+            jsonEncoder=jsonEncoder,
+            jsonDecoder=jsonDecoder
+        )
         self._ancestor_obj = ancestor_obj
         self._attribute_path = attribute_path
         self._remote_object_str = remote_object_str
@@ -28,7 +37,8 @@ class RemoteAttribute(RemoteObject):
                 "attribute_path": self._attribute_path,
             },
         )
-        for (name, parameters) in response.json()["methods"].items():
+        response_json = json.loads(response.content, cls=self.jsonDecoder)
+        for (name, parameters) in response_json["methods"].items():
             if name != "__init__":
                 self._add_method_loc(
                     name,
@@ -40,12 +50,12 @@ class RemoteAttribute(RemoteObject):
                     ),
                 )
         if self._attribute_depth_allowance != 0:
-            for (name, obj_str) in response.json()["attributes"].items():
+            for (name, obj_str) in response_json["attributes"].items():
                 # the class might already have the property defined
                 if not hasattr(self, name):
                     self._add_property(f"{self._attribute_path}.{name}")
 
-            for (name, obj_str) in response.json()["attributes_nonprimitive"].items():
+            for (name, obj_str) in response_json["attributes_nonprimitive"].items():
                 if obj_str in self._ancestor_obj:
                     self._add_remote_property(name, self._ancestor_obj[obj_str])
                 else:

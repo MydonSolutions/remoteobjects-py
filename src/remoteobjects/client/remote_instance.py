@@ -1,6 +1,6 @@
 from .remote_object import RemoteObject
 from .rest_client import RestClient
-
+import json
 
 class RequiredParameter(object):
     pass
@@ -15,6 +15,8 @@ class RemoteInstance(RemoteObject):
         delete_remote_on_del=True,
         remote_object_id=None,
         allowed_upload_extension_regex=r".*",
+        jsonEncoder=json.JSONEncoder,
+        jsonDecoder=json.JSONDecoder,
     ):
         if remote_object_id is None:
             # Register a new instance
@@ -32,11 +34,18 @@ class RemoteInstance(RemoteObject):
                 },
                 data=init_args_dict,
             )
+            registration_response_json = json.loads(registration_response.content, cls=jsonDecoder)
             if registration_response.status_code != 200:
-                raise RuntimeError(registration_response.json())
-            remote_object_id = registration_response.json()["id"]
+                raise RuntimeError(registration_response_json)
+            remote_object_id = registration_response_json["id"]
 
-        super().__init__(server_uri, remote_object_id, allowed_upload_extension_regex)
+        super().__init__(
+            server_uri,
+            remote_object_id,
+            allowed_upload_extension_regex,
+            jsonEncoder=jsonEncoder,
+            jsonDecoder=jsonDecoder,
+        )
         self._del_remote = delete_remote_on_del
 
     def _manage_CRUD_request(
@@ -63,6 +72,7 @@ class RemoteInstance(RemoteObject):
                 "new_id": new_id,
             },
         )
+        response_json = json.loads(response.content, cls=self.jsonDecoder)
         if response.status_code != 200:
-            raise RuntimeError(response.json())
-        self._remote_object_id = response.json()["id"]
+            raise RuntimeError(response_json)
+        self._remote_object_id = response_json["id"]

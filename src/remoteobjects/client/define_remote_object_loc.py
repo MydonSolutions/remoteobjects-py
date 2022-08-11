@@ -38,6 +38,8 @@ def _define_remote_constructor(
             "\t\tallowed_upload_extension_regex = "
             f"r'{allowed_upload_extension_regex}',"
         ),
+        "\t\tjsonEncoder = json.JSONEncoder,",
+        "\t\tjsonDecoder = json.JSONDecoder,",
     ]
 
     if kwargs_param_present:
@@ -64,14 +66,17 @@ def _define_remote_constructor(
         "\t\t\tinit_args_dict = init_args_dict,",
         "\t\t\tremote_object_id = remote_object_id,",
         "\t\t\tdelete_remote_on_del = delete_remote_on_del,",
-        ("\t\t\tallowed_upload_extension_regex = " "allowed_upload_extension_regex,"),
+        "\t\t\tallowed_upload_extension_regex = allowed_upload_extension_regex,",
+        "\t\t\tjsonEncoder = jsonEncoder,",
+        "\t\t\tjsonDecoder = jsonDecoder",
         "\t\t)",
         "\t\tresponse = self._get(",
         "\t\t\t'remoteobjects/registry/signature',",
         "\t\t\tparams = {'object_id': self._remote_object_id},",
         "\t\t)",
         "",
-        "\t\tfor (name, parameters) in response.json()['methods'].items():",
+        "\t\tresponse_json = json.loads(response.content, cls=)",
+        "\t\tfor (name, parameters) in response_json['methods'].items():",
         "\t\t\tif name != '__init__':",
         "\t\t\t\tself._add_method_loc(",
         "\t\t\t\t\tname,",
@@ -84,11 +89,11 @@ def _define_remote_constructor(
     ]
     if attribute_depth_allowance != 0:
         definition_loc += [
-            "\t\tfor (name, _) in response.json()['attributes'].items():",
+            "\t\tfor (name, _) in response_json['attributes'].items():",
             "\t\t\tself._add_property(name)",
-            "\t\tancestor_obj = {response.json()['object_str']: self}",
+            "\t\tancestor_obj = {response_json['object_str']: self}",
             (
-                "\t\tfor (name, obj_str) in response.json()["
+                "\t\tfor (name, obj_str) in response_json["
                 "'attributes_nonprimitive'].items():"
             ),
             "\t\t\tremote_attribute = RemoteAttribute(",

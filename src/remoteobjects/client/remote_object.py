@@ -2,7 +2,7 @@ import types
 from os import path
 import re
 import requests
-import sys
+import json
 
 from .rest_client import RestClient
 from ..server import __VERSION__
@@ -14,18 +14,20 @@ class RemoteObject(RestClient):
         server_uri,
         remote_object_id,
         allowed_upload_extension_regex=r".*",
+        jsonEncoder=json.JSONEncoder,
+        jsonDecoder=json.JSONDecoder,
     ):
         self._confirm_server_version(server_uri)
-        super().__init__(server_uri)
+        super().__init__(server_uri, jsonEncoder=jsonEncoder, jsonDecoder=jsonDecoder)
         self._allowed_extension_regex = allowed_upload_extension_regex
         self._remote_object_id = remote_object_id
         self.files_uploaded = {}
 
     @staticmethod
-    def _confirm_server_version(server_uri):
-        version_response = requests.get(
+    def _confirm_server_version(server_uri, jsonDecoder=json.JSONDecoder):
+        version_response = json.loads(requests.get(
             server_uri + "/remoteobjects/version",
-        ).json()["response"]
+        ).content, cls=jsonDecoder)["response"]
         if version_response != __VERSION__:
             raise RuntimeError(
                 f"Server's version `{version_response}` != `{__VERSION__}`"
@@ -55,9 +57,8 @@ class RemoteObject(RestClient):
             )
             if upload_response.status_code != 200:
                 raise RuntimeError(f"Failed to upload file arguments: {files_uploaded}")
-            for data_arg, data_arg_filepath in upload_response.json()[
-                "files_uploaded"
-            ].items():
+            upload_response_json = json.loads(upload_response.content, cls=self.jsonDecoder)
+            for data_arg, data_arg_filepath in upload_response_json["files_uploaded"].items():
                 files_uploaded[data_arg].close()
                 # update filepath arg_val to the server-local filepath returned
                 data[data_arg] = data_arg_filepath
@@ -76,7 +77,7 @@ class RemoteObject(RestClient):
         )
 
         if fileless_response.status_code != 200:
-            resp_json = fileless_response.json()
+            resp_json = json(fileless_response, cls=self.jsonDecoder)
             if "logs" in resp_json:
                 print(resp_json["logs"], end="")
             raise RuntimeError(resp_json["error"])
@@ -99,8 +100,7 @@ class RemoteObject(RestClient):
             if upload_response.status_code != 200:
                 raise RuntimeError(
                     (
-                        f"Failed to delete uploaded {file_keys}, "
-                        "{upload_response.json()}"
+                        f"Failed to delete uploaded {file_keys}"
                     )
                 )
             for file_key in file_keys:
@@ -154,7 +154,7 @@ class RemoteObject(RestClient):
             "\t\t},",
             "\t\tdata = args,",
             "\t)",
-            "\tresp_json = resp.json()",
+            "\tresp_json = json.loads(resp.content, cls=self.jsonDecoder)",
             "\tif 'logs' in resp_json and resp_json['logs'] is not None and len(resp_json['logs']) > 0:",
             "\t\tprint(resp_json['logs'], end='')",
             "\treturn resp_json['return']",
@@ -179,7 +179,7 @@ class RemoteObject(RestClient):
         if attribute_absolute_path is not None:
             params["attribute_path"] = attribute_absolute_path
         response = self._get("remoteobjects/registry", params=params)
-        return response.json()["value"]
+        return json.loads(response.content, cls=self.jsonDecoder)["value"]
 
     def _set_attribute(self, attribute_absolute_path, value):
         if value.__class__.__module__ != "builtins":
