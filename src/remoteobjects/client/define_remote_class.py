@@ -5,6 +5,8 @@ from .rest_client import RestClient
 from ..server import __VERSION__
 from .define_remote_object_loc import _define_remote_constructor
 
+import json
+
 
 def defineRemoteClass(
     class_key,

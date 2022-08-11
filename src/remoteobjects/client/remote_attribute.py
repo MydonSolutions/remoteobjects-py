@@ -67,5 +67,7 @@ class RemoteAttribute(RemoteObject):
                         self._ancestor_obj,
                         self._allowed_extension_regex,
                         self._attribute_depth_allowance - 1,
+                        jsonEncoder = self.jsonEncoder,
+                        jsonDecoder = self.jsonDecoder,
                     )
                     self._add_remote_property(name, remote_attribute)
