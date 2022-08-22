@@ -71,3 +71,5 @@ class RemoteAttribute(RemoteObject):
                         jsonDecoder = self.jsonDecoder,
                     )
                     self._add_remote_property(name, remote_attribute)
+
+        self._initialised = True
