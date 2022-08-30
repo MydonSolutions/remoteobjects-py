@@ -16,8 +16,10 @@ class RemoteObject(RestClient):
         allowed_upload_extension_regex=r".*",
         jsonEncoder=json.JSONEncoder,
         jsonDecoder=json.JSONDecoder,
+        confirm_server_version=False
     ):
-        self._confirm_server_version(server_uri)
+        if confirm_server_version:
+            self._confirm_server_version(server_uri)
         super().__init__(server_uri, jsonEncoder=jsonEncoder, jsonDecoder=jsonDecoder)
         self._allowed_extension_regex = allowed_upload_extension_regex
         self._remote_object_id = remote_object_id

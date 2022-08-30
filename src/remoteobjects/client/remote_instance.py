@@ -45,6 +45,7 @@ class RemoteInstance(RemoteObject):
             allowed_upload_extension_regex,
             jsonEncoder=jsonEncoder,
             jsonDecoder=jsonDecoder,
+            confirm_server_version=True
         )
         self._del_remote = delete_remote_on_del
 
