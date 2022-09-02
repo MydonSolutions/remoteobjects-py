@@ -13,14 +13,14 @@ class RemoteAttribute(RemoteObject):
         allowed_upload_extension_regex=r".*",
         attribute_depth_allowance: int = 0,
         jsonEncoder=json.JSONEncoder,
-        jsonDecoder=json.JSONDecoder
+        jsonDecoder=json.JSONDecoder,
     ):
         super().__init__(
             server_uri,
             root_object_id,
             allowed_upload_extension_regex,
             jsonEncoder=jsonEncoder,
-            jsonDecoder=jsonDecoder
+            jsonDecoder=jsonDecoder,
         )
         self._ancestor_obj = ancestor_obj
         self._attribute_path = attribute_path
@@ -67,8 +67,8 @@ class RemoteAttribute(RemoteObject):
                         self._ancestor_obj,
                         self._allowed_extension_regex,
                         self._attribute_depth_allowance - 1,
-                        jsonEncoder = self.jsonEncoder,
-                        jsonDecoder = self.jsonDecoder,
+                        jsonEncoder=self.jsonEncoder,
+                        jsonDecoder=self.jsonDecoder,
                     )
                     self._add_remote_property(name, remote_attribute)
 

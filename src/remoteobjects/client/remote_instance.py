@@ -2,6 +2,7 @@ from .remote_object import RemoteObject
 from .rest_client import RestClient
 import json
 
+
 class RequiredParameter(object):
     pass
 
@@ -34,7 +35,9 @@ class RemoteInstance(RemoteObject):
                 },
                 data=init_args_dict,
             )
-            registration_response_json = json.loads(registration_response.content, cls=jsonDecoder)
+            registration_response_json = json.loads(
+                registration_response.content, cls=jsonDecoder
+            )
             if registration_response.status_code != 200:
                 raise RuntimeError(registration_response_json)
             remote_object_id = registration_response_json["id"]
@@ -45,7 +48,7 @@ class RemoteInstance(RemoteObject):
             allowed_upload_extension_regex,
             jsonEncoder=jsonEncoder,
             jsonDecoder=jsonDecoder,
-            confirm_server_version=True
+            confirm_server_version=True,
         )
         self._del_remote = delete_remote_on_del
 

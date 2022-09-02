@@ -216,7 +216,7 @@ class RemoteObjectEndpoint_Registry(Resource):
 
         if hasattr(obj, "logger"):
             log_handler.close()
-            getattr(obj, "logger").removeHandler(log_handler) 
+            getattr(obj, "logger").removeHandler(log_handler)
             return_pair[0]["logs"] = tmp_logging.getvalue()
 
         __REMOTE_OBJECT_SEMAPHORES__[object_id].release()

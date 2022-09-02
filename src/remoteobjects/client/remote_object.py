@@ -16,7 +16,7 @@ class RemoteObject(RestClient):
         allowed_upload_extension_regex=r".*",
         jsonEncoder=json.JSONEncoder,
         jsonDecoder=json.JSONDecoder,
-        confirm_server_version=False
+        confirm_server_version=False,
     ):
         if confirm_server_version:
             self._confirm_server_version(server_uri)
@@ -27,9 +27,12 @@ class RemoteObject(RestClient):
 
     @staticmethod
     def _confirm_server_version(server_uri, jsonDecoder=json.JSONDecoder):
-        version_response = json.loads(requests.get(
-            server_uri + "/remoteobjects/version",
-        ).content, cls=jsonDecoder)["response"]
+        version_response = json.loads(
+            requests.get(
+                server_uri + "/remoteobjects/version",
+            ).content,
+            cls=jsonDecoder,
+        )["response"]
         if version_response != __VERSION__:
             raise RuntimeError(
                 f"Server's version `{version_response}` != `{__VERSION__}`"
@@ -59,8 +62,12 @@ class RemoteObject(RestClient):
             )
             if upload_response.status_code != 200:
                 raise RuntimeError(f"Failed to upload file arguments: {files_uploaded}")
-            upload_response_json = json.loads(upload_response.content, cls=self.jsonDecoder)
-            for data_arg, data_arg_filepath in upload_response_json["files_uploaded"].items():
+            upload_response_json = json.loads(
+                upload_response.content, cls=self.jsonDecoder
+            )
+            for data_arg, data_arg_filepath in upload_response_json[
+                "files_uploaded"
+            ].items():
                 files_uploaded[data_arg].close()
                 # update filepath arg_val to the server-local filepath returned
                 data[data_arg] = data_arg_filepath
@@ -100,11 +107,7 @@ class RemoteObject(RestClient):
                 "remoteobjects/upload", data={"file_keys": file_keys}
             )
             if upload_response.status_code != 200:
-                raise RuntimeError(
-                    (
-                        f"Failed to delete uploaded {file_keys}"
-                    )
-                )
+                raise RuntimeError((f"Failed to delete uploaded {file_keys}"))
             for file_key in file_keys:
                 self.files_uploaded.pop(file_key)
 

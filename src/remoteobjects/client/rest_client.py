@@ -4,19 +4,20 @@ import json
 
 class RestClient(object):
     def __init__(
-        self,
-        server_uri,
-        jsonEncoder=json.JSONEncoder,
-        jsonDecoder=json.JSONDecoder
+        self, server_uri, jsonEncoder=json.JSONEncoder, jsonDecoder=json.JSONDecoder
     ):
         self._server_uri = server_uri
         self.jsonEncoder = jsonEncoder
         self.jsonDecoder = jsonDecoder
 
     @staticmethod
-    def _content_type(data, jsonEncoder=json.JSONEncoder):  # returns converted data, {"Content-Type": }
+    def _content_type(
+        data, jsonEncoder=json.JSONEncoder
+    ):  # returns converted data, {"Content-Type": }
         if isinstance(data, dict):
-            return json.dumps(data, cls=jsonEncoder), {"Content-Type": "application/json"}
+            return json.dumps(data, cls=jsonEncoder), {
+                "Content-Type": "application/json"
+            }
         bytes_data = bytes(data) if not isinstance(data, bytes) else data
         bytes_data_len = len(bytes_data)
         return bytes_data, {
