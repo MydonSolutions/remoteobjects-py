@@ -105,7 +105,9 @@ class RemoteObjectEndpoint_Signature(Resource):
             # return the object_ids of registered objects
             try:
                 return {
-                    "object_ids": __REMOTE_OBJECT_REGISTRY__._registered_obj_dict.keys()
+                    "object_ids": list(
+                        __REMOTE_OBJECT_REGISTRY__._registered_obj_dict.keys()
+                    )
                 }, 200
             except BaseException as err:
                 return {"error": f"{type(err)}: {repr(err)}"}, 500
