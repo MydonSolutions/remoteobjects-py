@@ -133,6 +133,8 @@ class ObjectRegistry(object):
                     )
                 else:
                     kwargs[argname] = argdict["default"]
+            elif argname in method_args_dict:
+                kwargs[argname] = method_args_dict.pop(argname)
             else:
                 args.append(method_args_dict.pop(argname))
 
