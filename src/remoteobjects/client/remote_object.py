@@ -126,13 +126,21 @@ class RemoteObject(RestClient):
             kwargs_param_present = parameters[last_param_key]["code_string"].startswith(
                 "**"
             )
+
+        signature_params = [
+            param_dict["code_string"] for param_dict in parameters.values()
+        ]
+
+        if kwargs_param_present:
+            signature_params.insert(-1, "remobj_capture_logs = None")
+        else:
+            signature_params.append("remobj_capture_logs = None")
+        signature_params.insert(0, "self")
+
         loc = [
             "def {}({}):".format(
                 func_name,
-                ",".join(
-                    ["self"]
-                    + [param_dict["code_string"] for param_dict in parameters.values()]
-                ),
+                ",".join(signature_params),
             ),
             "\targs = {",
             *[
@@ -161,7 +169,10 @@ class RemoteObject(RestClient):
             "\t)",
             "\tresp_json = json.loads(resp.content, cls=self.jsonDecoder)",
             "\tif 'logs' in resp_json and resp_json['logs'] is not None and len(resp_json['logs']) > 0:",
-            "\t\tprint(resp_json['logs'], end='')",
+            "\t\tif remobj_capture_logs is None:",
+            "\t\t\tprint(resp_json['logs'], end='')",
+            "\t\telif isinstance(remobj_capture_logs, list):",
+            "\t\t\tremobj_capture_logs.append(resp_json['logs'])",
             "\treturn resp_json['return']",
             "",
         ]
