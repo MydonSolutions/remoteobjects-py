@@ -8,6 +8,12 @@ from .rest_client import RestClient
 from ..server import __VERSION__
 
 
+class RemoteObjectException(Exception):
+    def __init__(self, message, traceback):
+        self.traceback = traceback
+        super().__init__(message)
+
+
 class RemoteObject(RestClient):
     def __init__(
         self,
@@ -89,7 +95,8 @@ class RemoteObject(RestClient):
             resp_json = json.loads(fileless_response.content, cls=self.jsonDecoder)
             if "logs" in resp_json:
                 print(resp_json["logs"], end="")
-            raise RuntimeError(resp_json["error"])
+
+            raise RemoteObjectException(resp_json["error"], resp_json["traceback"])
         return fileless_response
 
     def __del__(self):
@@ -184,7 +191,7 @@ class RemoteObject(RestClient):
         try:
             exec(func_code, None, local_env_dict)
         except BaseException as err:
-            print(f"`{func_code}`")
+            print(f"```\n{func_code}\n```")
             raise err
         setattr(self, func_name, types.MethodType(local_env_dict[func_name], self))
 
