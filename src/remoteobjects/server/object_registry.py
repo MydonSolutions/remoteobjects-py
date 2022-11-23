@@ -81,7 +81,7 @@ class ObjectRegistry(object):
         if not (
             isinstance(func, types.FunctionType) or isinstance(func, types.MethodType)
         ):
-            raise RuntimeError(f"`{func}` is not a functinon nor method")
+            raise RuntimeError(f"`{func}` is not a function nor method")
         return {
             key: ObjectRegistry._get_parameter_dict(parameter)
             for (key, parameter) in inspect.signature(func).parameters.items()
@@ -241,7 +241,7 @@ class ObjectRegistry(object):
             raise NotImplementedError("No registered object for `{}`.".format(objid))
         if newid in self._registered_obj_dict:
             raise RuntimeError(
-                ("Proposed ID `{}` for object already used for " "`{}`.").format(
+                ("Proposed ID `{}` for object already used for `{}`.").format(
                     newid, self._registered_obj_dict[newid]
                 )
             )
