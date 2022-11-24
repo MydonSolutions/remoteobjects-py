@@ -71,8 +71,9 @@ class RemoteObjectEndpoint_Upload(Resource):
                 )
                 logger.warn(message)
                 return {
-                    "error": message,
-                    "files_uploaded": file_key_to_path_dict,
+                    "error": str(ValueError(message)),
+                    "message": f"Files uploaded: {file_key_to_path_dict}",
+                    "traceback": "None",
                 }, 500
 
         __UPLOADED_FILE_DICT__.update(file_key_to_path_dict)
@@ -93,7 +94,11 @@ class RemoteObjectEndpoint_Upload(Resource):
                 f"\tFiles deleted: {deleted_files_dict}\n"
                 f"\tError: {repr(err)}"
             )
-            return {"files_removed": deleted_files_dict, "error": repr(err)}, 500
+            return {
+                "error": str(err),
+                "message": f"Removed: {deleted_files_dict}",
+                "traceback": traceback.format_exc(),
+            }, 500
         return {"files_removed": deleted_files_dict}, 200
 
 
@@ -111,11 +116,15 @@ class RemoteObjectEndpoint_Signature(Resource):
                         class_key
                     )
                 }, 200
-            except BaseException:
+            except BaseException as err:
                 logger = logging.getLogger("remoteobjects_endpoints")
                 message = f"Error getting class __init__ signature for `{class_key}`"
                 logger.error(message)
-                return {"error": message, "traceback": traceback.format_exc()}, 500
+                return {
+                    "error": str(err),
+                    "message": message,
+                    "traceback": traceback.format_exc(),
+                }, 500
         elif object_id is not None:
             # return the {method_name: method_signature...} of the registered
             # object
@@ -124,13 +133,17 @@ class RemoteObjectEndpoint_Signature(Resource):
                     __REMOTE_OBJECT_REGISTRY__.obj_signature(object_id, attribute_path),
                     200,
                 )
-            except BaseException:
+            except BaseException as err:
                 logger = logging.getLogger("remoteobjects_endpoints")
                 message = (
                     f"Error getting object signature for `{object_id}:{attribute_path}`"
                 )
                 logger.error(message)
-                return {"error": message, "traceback": traceback.format_exc()}, 500
+                return {
+                    "error": str(err),
+                    "message": message,
+                    "traceback": traceback.format_exc(),
+                }, 500
         else:
             # return the object_ids of registered objects
             try:
@@ -139,11 +152,15 @@ class RemoteObjectEndpoint_Signature(Resource):
                         __REMOTE_OBJECT_REGISTRY__._registered_obj_dict.keys()
                     )
                 }, 200
-            except BaseException:
+            except BaseException as err:
                 logger = logging.getLogger("remoteobjects_endpoints")
                 message = f"Error getting object IDs"
                 logger.error(message)
-                return {"error": message, "traceback": traceback.format_exc()}, 500
+                return {
+                    "error": str(err),
+                    "message": message,
+                    "traceback": traceback.format_exc(),
+                }, 500
 
 
 class RemoteObjectEndpoint_Registry(Resource):
@@ -170,12 +187,16 @@ class RemoteObjectEndpoint_Registry(Resource):
                 )
 
                 return {"id": object_id}, 200
-            except BaseException:
+            except BaseException as err:
                 logger = logging.getLogger("remoteobjects_endpoints")
                 message = f"Error registering a new object `{class_key}({self._arg_dict(request)})`"
                 logger.error(message)
-                return {"error": message, "traceback": traceback.format_exc()}, 500
-        elif object_id is not None:
+                return {
+                    "error": str(err),
+                    "message": message,
+                    "traceback": traceback.format_exc(),
+                }, 500
+        else:  # object_id is not None:
             # return the value of the object's attribute
             __REMOTE_OBJECT_SEMAPHORES__[object_id].acquire()
             try:
@@ -186,30 +207,20 @@ class RemoteObjectEndpoint_Registry(Resource):
                     return_pair = ({"value": value}, 200)
                 else:
                     return_pair = (ObjectRegistry._obj_signature(value), 200)
-            except BaseException:
+            except BaseException as err:
                 logger = logging.getLogger("remoteobjects_endpoints")
                 message = f"Error getting an object's attribute `{object_id}:{attribute_path}`"
                 logger.error(message)
                 return_pair = (
-                    {"error": message, "traceback": traceback.format_exc()},
+                    {
+                        "error": str(err),
+                        "message": message,
+                        "traceback": traceback.format_exc(),
+                    },
                     500,
                 )
             __REMOTE_OBJECT_SEMAPHORES__[object_id].release()
             return return_pair[0], return_pair[1]
-
-        logger = logging.getLogger("remoteobjects_endpoints")
-        logger.warn(
-            f"Unsupported parameter combination:\n"
-            f"\tclass_key: {class_key}\n"
-            f"\tobject_id: {object_id}\n"
-            f"\tattribute_path: {attribute_path}"
-        )
-        return {
-            "error": "Unsupported parameter combination.",
-            "class_key": class_key,
-            "object_id": object_id,
-            "attribute_path": attribute_path,
-        }, 500
 
     def put(self):
         object_id = request.args.get("object_id", default=None, type=str)
@@ -222,12 +233,16 @@ class RemoteObjectEndpoint_Registry(Resource):
                     object_id, attribute_path, request.json["value"]
                 )
                 return_pair = ({}, 200)
-            except BaseException:
+            except BaseException as err:
                 logger = logging.getLogger("remoteobjects_endpoints")
                 message = f"Error setting the value of an object's attribute: `{object_id}:{attribute_path} = {request.json['value']}`"
                 logger.error(message)
                 return_pair = (
-                    {"error": message, "traceback": traceback.format_exc()},
+                    {
+                        "error": str(err),
+                        "message": message,
+                        "traceback": traceback.format_exc(),
+                    },
                     500,
                 )
             __REMOTE_OBJECT_SEMAPHORES__[object_id].release()
@@ -249,13 +264,17 @@ class RemoteObjectEndpoint_Registry(Resource):
         __REMOTE_OBJECT_SEMAPHORES__[object_id].acquire()
         try:
             obj = __REMOTE_OBJECT_REGISTRY__.obj_attribute(object_id, attribute_path)
-        except BaseException:
+        except BaseException as err:
             logger = logging.getLogger("remoteobjects_endpoints")
             message = (
                 f"Error accessing an object's attribute: `{object_id}:{attribute_path}`"
             )
             logger.error(message)
-            return {"error": message, "traceback": traceback.format_exc()}, 500
+            return {
+                "error": str(err),
+                "message": message,
+                "traceback": traceback.format_exc(),
+            }, 500
 
         if hasattr(obj, "logger"):
             tmp_logging = StringIO()
@@ -273,11 +292,18 @@ class RemoteObjectEndpoint_Registry(Resource):
                 },
                 200,
             )
-        except BaseException:
+        except BaseException as err:
             logger = logging.getLogger("remoteobjects_endpoints")
             message = f"Error calling an object's method: `{object_id}:{attribute_path}.{func_name}({self._arg_dict(request)})`"
             logger.error(message)
-            return_pair = ({"error": message, "traceback": traceback.format_exc()}, 500)
+            return_pair = (
+                {
+                    "error": str(err),
+                    "message": message,
+                    "traceback": traceback.format_exc(),
+                },
+                500,
+            )
 
         if hasattr(obj, "logger"):
             log_handler.close()
@@ -295,11 +321,18 @@ class RemoteObjectEndpoint_Registry(Resource):
             new_id = __REMOTE_OBJECT_REGISTRY__.obj_set_id(object_id, new_id)
             return_pair = ({"id": new_id}, 200)
             object_id = new_id
-        except BaseException:
+        except BaseException as err:
             logger = logging.getLogger("remoteobjects_endpoints")
             message = f"Error switching object's ID: `{object_id} -> {new_id}`"
             logger.error(message)
-            return_pair = ({"error": message, "traceback": traceback.format_exc()}, 500)
+            return_pair = (
+                {
+                    "error": str(err),
+                    "message": message,
+                    "traceback": traceback.format_exc(),
+                },
+                500,
+            )
         __REMOTE_OBJECT_SEMAPHORES__[object_id].release()
         return return_pair[0], return_pair[1]
 
@@ -308,11 +341,18 @@ class RemoteObjectEndpoint_Registry(Resource):
         try:
             __REMOTE_OBJECT_REGISTRY__.deregister_object(object_id)
             return_pair = ({}, 200)
-        except BaseException:
+        except BaseException as err:
             logger = logging.getLogger("remoteobjects_endpoints")
             message = f"Error deregistering object: `{object_id}`"
             logger.error(message)
-            return_pair = ({"error": message, "traceback": traceback.format_exc()}, 500)
+            return_pair = (
+                {
+                    "error": str(err),
+                    "message": message,
+                    "traceback": traceback.format_exc(),
+                },
+                500,
+            )
         return return_pair[0], return_pair[1]
 
 
