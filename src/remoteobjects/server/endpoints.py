@@ -40,6 +40,12 @@ __ALLOWED_EXTENSION_REGEX__ = r".*"
 __UPLOADED_FILE_DICT__ = {}
 
 
+def _str_object_attribute(object_id, attribute_path):
+    if attribute_path is not None:
+        return f"{object_id}:{attribute_path}"
+    return object_id
+
+
 class RemoteObjectEndpoint_Upload(Resource):
     @staticmethod
     def _allowed_file(filename):
@@ -135,9 +141,7 @@ class RemoteObjectEndpoint_Signature(Resource):
                 )
             except BaseException as err:
                 logger = logging.getLogger("remoteobjects_endpoints")
-                message = (
-                    f"Error getting object signature for `{object_id}:{attribute_path}`"
-                )
+                message = f"Error getting object signature for `{_str_object_attribute(object_id, attribute_path)}`"
                 logger.error(message)
                 return {
                     "error": str(err),
@@ -209,7 +213,7 @@ class RemoteObjectEndpoint_Registry(Resource):
                     return_pair = (ObjectRegistry._obj_signature(value), 200)
             except BaseException as err:
                 logger = logging.getLogger("remoteobjects_endpoints")
-                message = f"Error getting an object's attribute `{object_id}:{attribute_path}`"
+                message = f"Error getting an object's attribute `{_str_object_attribute(object_id, attribute_path)}`"
                 logger.error(message)
                 return_pair = (
                     {
@@ -235,7 +239,7 @@ class RemoteObjectEndpoint_Registry(Resource):
                 return_pair = ({}, 200)
             except BaseException as err:
                 logger = logging.getLogger("remoteobjects_endpoints")
-                message = f"Error setting the value of an object's attribute: `{object_id}:{attribute_path} = {request.json['value']}`"
+                message = f"Error setting the value of an object's attribute: `{_str_object_attribute(object_id, attribute_path)} = {request.json['value']}`"
                 logger.error(message)
                 return_pair = (
                     {
@@ -266,9 +270,7 @@ class RemoteObjectEndpoint_Registry(Resource):
             obj = __REMOTE_OBJECT_REGISTRY__.obj_attribute(object_id, attribute_path)
         except BaseException as err:
             logger = logging.getLogger("remoteobjects_endpoints")
-            message = (
-                f"Error accessing an object's attribute: `{object_id}:{attribute_path}`"
-            )
+            message = f"Error accessing an object's attribute: `{_str_object_attribute(object_id, attribute_path)}`"
             logger.error(message)
             return {
                 "error": str(err),
@@ -294,7 +296,7 @@ class RemoteObjectEndpoint_Registry(Resource):
             )
         except BaseException as err:
             logger = logging.getLogger("remoteobjects_endpoints")
-            message = f"Error calling an object's method: `{object_id}:{attribute_path}.{func_name}({self._arg_dict(request)})`"
+            message = f"Error calling an object's method: `{_str_object_attribute(object_id, attribute_path)}.{func_name}({self._arg_dict(request)})`"
             logger.error(message)
             return_pair = (
                 {
