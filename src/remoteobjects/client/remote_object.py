@@ -8,10 +8,14 @@ from .rest_client import RestClient
 from ..server import __VERSION__
 
 
-class RemoteObjectException(Exception):
+class RemoteObjectError(RuntimeError):
     def __init__(self, message, traceback):
+        self.message = message
         self.traceback = traceback
-        super().__init__(message)
+        super(RemoteObjectError, self).__init__(message, traceback)
+
+    def __str__(self):
+        return f"\nRemote Traceback:\n{self.traceback}{self.message}"
 
 
 class RemoteObject(RestClient):
@@ -96,7 +100,7 @@ class RemoteObject(RestClient):
             if "logs" in resp_json:
                 print(resp_json["logs"], end="")
 
-            raise RemoteObjectException(resp_json["error"], resp_json["traceback"])
+            raise RemoteObjectError(resp_json["error"], resp_json["traceback"])
         return fileless_response
 
     def __del__(self):
