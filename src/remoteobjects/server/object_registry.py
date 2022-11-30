@@ -105,7 +105,9 @@ class ObjectRegistry(object):
         return ObjectRegistry._get_function_args(func)
 
     @staticmethod
-    def _obj_call_method(obj, method_name, method_args_dict={}):
+    def _obj_call_method(obj, method_name, method_args_dict=None):
+        if method_args_dict is None:
+            method_args_dict = {}
         assert isinstance(method_args_dict, dict)
         if hasattr(obj, method_name):
             func = getattr(obj, method_name)
@@ -118,14 +120,18 @@ class ObjectRegistry(object):
         # build argument list
         args = []
         kwargs = {}
+        args_unaccounted_for = list(method_parameters.keys())
         for argname, argdict in method_parameters.items():
             if argname == "self":
                 # args.append(obj)
-                continue
+                pass
             elif argdict["code_string"].startswith("**"):
                 # kwargs
                 kwargs.update(method_args_dict)
-                method_args_dict.clear()
+                for kwargname in method_args_dict.keys():
+                    if kwargname in args_unaccounted_for:
+                        args_unaccounted_for.pop(args_unaccounted_for.index(kwargname))
+                break
             elif argname not in method_args_dict:
                 if "default" not in argdict:
                     raise RuntimeError(
@@ -134,12 +140,14 @@ class ObjectRegistry(object):
                 else:
                     kwargs[argname] = argdict["default"]
             elif argname in method_args_dict:
-                kwargs[argname] = method_args_dict.pop(argname)
+                kwargs[argname] = method_args_dict[argname]
             else:
-                args.append(method_args_dict.pop(argname))
+                args.append(method_args_dict[argname])
 
-        if len(method_args_dict) > 0:
-            raise RuntimeError(f"Unexpected arguments: {method_args_dict}")
+            args_unaccounted_for.pop(args_unaccounted_for.index(argname))
+
+        if len(args_unaccounted_for) > 0:
+            raise RuntimeError(f"Unexpected arguments: {args_unaccounted_for}")
 
         if method_name == "__init__":
             return obj(*args, **kwargs)
@@ -210,14 +218,18 @@ class ObjectRegistry(object):
         }
 
     def obj_call_method(
-        self, objid, method_name, method_args_dict={}, attribute_path=None
+        self, objid, method_name, method_args_dict=None, attribute_path=None
     ):
+        if method_args_dict is None:
+            method_args_dict = {}
         obj = self.get_registered_object(objid)
         if attribute_path is not None:
             obj = self._obj_attribute(obj, attribute_path)
         return self._obj_call_method(obj, method_name, method_args_dict)
 
-    def register_new_object(self, class_key, args_dict={}):
+    def register_new_object(self, class_key, args_dict=None):
+        if args_dict is None:
+            args_dict = {}
         if class_key not in self._abstract_class_key_dict:
             raise RuntimeError("No such class: `{}`".format(class_key))
         class_obj = self._abstract_class_key_dict[class_key]

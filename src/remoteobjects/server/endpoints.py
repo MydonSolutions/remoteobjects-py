@@ -282,13 +282,14 @@ class RemoteObjectEndpoint_Registry(Resource):
             tmp_logging = StringIO()
             log_handler = captureLoggingOutput(getattr(obj, "logger"), tmp_logging)
 
+        method_arguments = self._arg_dict(request)
         try:
             return_pair = (
                 {
                     "return": __REMOTE_OBJECT_REGISTRY__.obj_call_method(
                         object_id,
                         func_name,
-                        self._arg_dict(request),
+                        method_arguments,
                         attribute_path=attribute_path,
                     )
                 },
@@ -296,7 +297,7 @@ class RemoteObjectEndpoint_Registry(Resource):
             )
         except BaseException as err:
             logger = logging.getLogger("remoteobjects_endpoints")
-            message = f"Error calling an object's method: `{_str_object_attribute(object_id, attribute_path)}.{func_name}({self._arg_dict(request)})`"
+            message = f"Error calling an object's method: `{_str_object_attribute(object_id, attribute_path)}.{func_name}({method_arguments})`"
             logger.error(message)
             return_pair = (
                 {
