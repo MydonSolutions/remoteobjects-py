@@ -115,44 +115,11 @@ class ObjectRegistry(object):
             raise NotImplementedError(
                 "Class `{}` does not implement `{}`".format(obj, method_name)
             )
-        method_parameters = ObjectRegistry._get_function_args(func)
-
-        # build argument list
-        args = []
-        kwargs = {}
-        args_unaccounted_for = list(method_parameters.keys())
-        for argname, argdict in method_parameters.items():
-            if argname == "self":
-                # args.append(obj)
-                pass
-            elif argdict["code_string"].startswith("**"):
-                # kwargs
-                kwargs.update(method_args_dict)
-                for kwargname in method_args_dict.keys():
-                    if kwargname in args_unaccounted_for:
-                        args_unaccounted_for.pop(args_unaccounted_for.index(kwargname))
-                break
-            elif argname not in method_args_dict:
-                if "default" not in argdict:
-                    raise RuntimeError(
-                        "Missing required argument `{}`.".format(argname)
-                    )
-                else:
-                    kwargs[argname] = argdict["default"]
-            elif argname in method_args_dict:
-                kwargs[argname] = method_args_dict[argname]
-            else:
-                args.append(method_args_dict[argname])
-
-            args_unaccounted_for.pop(args_unaccounted_for.index(argname))
-
-        if len(args_unaccounted_for) > 0:
-            raise RuntimeError(f"Unexpected arguments: {args_unaccounted_for}")
 
         if method_name == "__init__":
-            return obj(*args, **kwargs)
+            return obj(**method_args_dict)
         else:
-            return func(*args, **kwargs)
+            return func(**method_args_dict)
 
     def get_registered_object(self, objid):
         if objid not in self._registered_obj_dict:
