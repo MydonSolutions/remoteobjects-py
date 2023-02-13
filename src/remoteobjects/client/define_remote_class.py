@@ -2,7 +2,7 @@ from .remote_attribute import RemoteAttribute
 from .remote_instance import RemoteInstance, RequiredParameter
 from .remote_object import RemoteObject
 from .rest_client import RestClient
-from ..server import __VERSION__
+from .. import __VERSION__
 from .define_remote_object_loc import _define_remote_constructor
 
 import json

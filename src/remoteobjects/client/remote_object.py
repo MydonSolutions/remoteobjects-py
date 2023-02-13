@@ -5,7 +5,7 @@ import requests
 import json
 
 from .rest_client import RestClient
-from ..server import __VERSION__
+from .. import __VERSION__
 
 
 class RemoteObjectError(RuntimeError):
