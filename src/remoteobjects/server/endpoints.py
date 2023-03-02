@@ -29,7 +29,7 @@ def captureLoggingOutput(logger, stringIoObject):
 
 
 from .object_registry import ObjectRegistry
-from .server_version import __VERSION__
+from .. import __VERSION__
 
 __REMOTE_OBJECT_REGISTRY__ = None
 __REMOTE_OBJECT_SEMAPHORES__ = {}
