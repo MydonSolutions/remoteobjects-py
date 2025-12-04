@@ -144,16 +144,26 @@ class ObjectRegistry(object):
         }
 
     @staticmethod
+    def _get_attr(obj, attr):
+        container_match = re.match(r"(.*)\[(.*)\]", attr)
+        if container_match is None:
+            return getattr(obj, attr)
+        else:
+            obj = getattr(obj, container_match.group(1))
+            return obj[eval(container_match.group(2))]
+
+    @staticmethod
     def _traverse_attribute_path(obj, attribute_path):
         attributes = attribute_path.split(".")
-        attribute_final = attributes.pop()
-        for attr in attributes:
-            obj = getattr(obj, attr)
-        return obj, attribute_final
+        for attr in attributes[0:-1]:
+            obj = ObjectRegistry._get_attr(obj, attr)
+        return obj, attributes[-1]
 
-    def _obj_attribute(self, obj, attribute_path):
-        obj_leaf, attribute = self._traverse_attribute_path(obj, attribute_path)
-        return getattr(obj_leaf, attribute)
+    @staticmethod
+    def _obj_attribute(obj, attribute_path):
+        return ObjectRegistry._get_attr(
+            ObjectRegistry._traverse_attribute_path(obj, attribute_path)
+        )
 
     def obj_attribute(self, objid, attribute_path):
         obj = self.get_registered_object(objid)
@@ -161,8 +171,11 @@ class ObjectRegistry(object):
             return obj
         return self._obj_attribute(obj, attribute_path)
 
-    def _obj_attribute_set(self, obj, attribute_path, value):
-        obj_leaf, attribute = self._traverse_attribute_path(obj, attribute_path)
+    @staticmethod
+    def _obj_attribute_set(obj, attribute_path, value):
+        obj_leaf, attribute = ObjectRegistry._traverse_attribute_path(
+            obj, attribute_path
+        )
         setattr(obj_leaf, attribute, value)
 
     def obj_attribute_set(self, objid, attribute_path, value):
